@@ -30,10 +30,14 @@ function initDatabase() {
 
   // Use Node.js built-in SQLite engine
   const { DatabaseSync } = require('node:sqlite');
-  const dbDir = path.join(__dirname, '..', '..', 'data');
-  if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-  }
+  const os = require('os');
+  const isServerless = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  const dbDir = isServerless ? os.tmpdir() : path.join(__dirname, '..', '..', 'data');
+  try {
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+  } catch (e) {}
   const dbPath = path.join(dbDir, 'sc_gameing.sqlite');
   dbDriver = new DatabaseSync(dbPath);
   dbType = 'sqlite';
