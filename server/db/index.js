@@ -15,7 +15,13 @@ function initDatabase() {
         const isSupabase = config.db.url.includes('supabase.co') || config.db.url.includes('supabase.com') || config.db.url.includes('pooler.supabase');
         const pool = new Pool({
           connectionString: config.db.url,
-          ssl: (process.env.NODE_ENV === 'production' || isSupabase) ? { rejectUnauthorized: false } : false
+          ssl: (process.env.NODE_ENV === 'production' || isSupabase) ? { rejectUnauthorized: false } : false,
+          connectionTimeoutMillis: 8000,
+          idleTimeoutMillis: 30000,
+          max: 10
+        });
+        pool.on('error', (err) => {
+          console.warn('⚠️ Non-fatal PostgreSQL pool client notice:', err.message);
         });
         dbDriver = pool;
         dbType = 'postgres';
@@ -508,7 +514,20 @@ function initSqliteSchema() {
   seedDefaultData();
 }
 
+let schemaInitialized = false;
 async function initPostgresSchema() {
+  if (schemaInitialized) return;
+  schemaInitialized = true;
+
+  try {
+    const tableCheck = await dbDriver.query("SELECT to_regclass('public.users') as exists;");
+    if (tableCheck.rows[0] && tableCheck.rows[0].exists) {
+      console.log('✅ PostgreSQL / Supabase Schema already synchronized.');
+      await seedDefaultData();
+      return;
+    }
+  } catch (e) {}
+
   const schemaPath = path.join(__dirname, '..', '..', 'supabase_schema.sql');
   if (fs.existsSync(schemaPath)) {
     try {
