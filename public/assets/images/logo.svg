@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+  <defs>
+    <linearGradient id="fireGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9500" />
+      <stop offset="50%" stop-color="#FF4B00" />
+      <stop offset="100%" stop-color="#FF1A00" />
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Shield Badge -->
+  <polygon points="45,15 75,25 75,65 45,85 15,65 15,25" fill="url(#shieldGrad)" stroke="url(#fireGrad)" stroke-width="3" filter="url(#glow)"/>
+  
+  <!-- Fire Flame Inside Shield -->
+  <path d="M45,28 C50,38 58,45 52,60 C48,68 40,70 38,62 C36,54 42,48 40,42 C38,48 32,54 34,64 C28,58 28,48 35,38 C38,34 42,30 45,28 Z" fill="url(#fireGrad)"/>
+
+  <!-- Logo Text: SC GAMEING -->
+  <text x="95" y="55" font-family="'Rajdhani', sans-serif" font-weight="800" font-size="44" fill="#FFFFFF" letter-spacing="2">
+    SC <tspan fill="url(#fireGrad)">GAMEING</tspan>
+  </text>
+  
+  <!-- Subtitle: FREE FIRE TOURNAMENTS -->
+  <text x="96" y="78" font-family="'Inter', sans-serif" font-weight="700" font-size="12" fill="#FFA500" letter-spacing="4">
+    FREE FIRE ESPORTS ARENA
+  </text>
+</svg>

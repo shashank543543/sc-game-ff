@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SC GAMEING - Free Fire Esports Cash Tournaments</title>
+  <meta name="description" content="Join daily Free Fire & Free Fire MAX cash tournaments. Compete in Bermuda, Kalahari, Purgatory with instant UPI withdrawals." />
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <!-- Tailwind CSS CDN for utility classes -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Custom Esports Theme Styles -->
+  <link rel="stylesheet" href="/css/custom.css" />
+</head>
+<body class="pb-24 md:pb-10">
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Announcement Ticker -->
+  <div class="ticker-wrap">
+    <div class="ticker-content flex items-center gap-4">
+      <span>🔥 Welcome to <strong>SC GAMEING</strong>: Daily Free Fire cash tournaments with automated prize distribution!</span>
+      <span>⚡ Instant UPI deposits & fast withdrawals directly to your UPI ID!</span>
+      <span>🎮 Room ID & Password published 15 minutes before match start for registered players!</span>
+      <span>🏆 100% fair play guaranteed. No emulators or hackers allowed.</span>
+    </div>
+  </div>
+
+  <!-- Main Top Navigation -->
+  <header class="sticky top-0 z-40 bg-[#0e131b]/95 backdrop-blur-md border-b border-[#263347]">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="#" onclick="switchView('home')" class="flex items-center gap-2">
+        <img src="/assets/images/logo.svg" alt="SC GAMEING Logo" class="h-10 md:h-12 w-auto" />
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <nav class="hidden md:flex items-center gap-6 text-sm font-bold uppercase tracking-wider font-heading">
+        <a href="#" onclick="switchView('home')" class="text-white hover:text-orange-500 transition">Tournaments</a>
+        <a href="#" onclick="switchView('matches')" class="text-gray-400 hover:text-orange-500 transition">My Matches</a>
+        <a href="#" onclick="switchView('wallet')" class="text-gray-400 hover:text-orange-500 transition">Wallet</a>
+        <a href="#" onclick="switchView('profile')" class="text-gray-400 hover:text-orange-500 transition">Profile</a>
+        <button onclick="openLiveChat()" class="text-orange-400 hover:text-orange-300 transition flex items-center gap-1.5 uppercase">
+          <i class="fas fa-headset text-orange-400"></i> Support
+        </button>
+        <a href="/admin" class="admin-nav-item hidden text-yellow-400 hover:text-yellow-300 transition flex items-center gap-1">
+          <i class="fas fa-shield-alt"></i> Admin Panel
+        </a>
+      </nav>
+
+      <!-- User Action & Wallet Header Pill -->
+      <div class="flex items-center gap-3">
+        
+        <!-- Logged Out State -->
+        <div class="auth-logged-out flex items-center gap-2">
+          <button onclick="openAuthModal('login')" class="btn-ff-outline text-xs px-3 py-1.5 md:px-4 md:py-2">
+            Login
+          </button>
+          <button onclick="openAuthModal('signup')" class="btn-ff-primary text-xs px-3 py-1.5 md:px-4 md:py-2">
+            Sign Up
+          </button>
+        </div>
+
+        <!-- Logged In State: Wallet Pill & Profile -->
+        <div class="auth-logged-in hidden flex items-center gap-3">
+          <!-- Quick Wallet Pill -->
+          <div onclick="switchView('wallet')" class="cursor-pointer bg-slate-900 border border-slate-700 hover:border-orange-500 px-3 py-1.5 rounded-full flex items-center gap-2 transition">
+            <i class="fas fa-wallet text-orange-400 text-sm"></i>
+            <span class="user-balance-val font-bold text-sm text-green-400 font-heading">₹0.00</span>
+            <button onclick="event.stopPropagation(); openDepositModal();" class="w-5 h-5 rounded-full bg-orange-600 hover:bg-orange-500 text-white flex items-center justify-center text-[10px] font-bold">
+              +
+            </button>
+          </div>
+
+          <!-- Notification Bell & Push Dropdown -->
+          <div class="relative">
+            <button id="btn-notifications-toggle" onclick="toggleNotificationDropdown(event)" title="Match & Room Notifications" class="relative w-8 h-8 rounded-full bg-slate-900 border border-slate-700 hover:border-orange-500 text-gray-300 hover:text-white flex items-center justify-center transition">
+              <i class="fas fa-bell text-xs"></i>
+              <span id="header-notif-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-red-600 text-white rounded-full text-[9px] font-black flex items-center justify-center border border-[#090C10] animate-pulse">0</span>
+            </button>
+
+            <!-- Notifications Dropdown -->
+            <div id="notification-dropdown" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-[#0f141d]/98 border border-orange-500/40 rounded-xl shadow-2xl shadow-black z-50 overflow-hidden backdrop-blur-xl">
+              <div class="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-bell text-orange-400 text-xs"></i>
+                  <span class="text-xs font-bold text-white font-heading">Match Notifications</span>
+                </div>
+                <button onclick="markAllNotificationsAsRead()" class="text-[10px] text-gray-400 hover:text-orange-400 font-semibold transition">
+                  Mark all read
+                </button>
+              </div>
+              <div id="notifications-list" class="max-h-80 overflow-y-auto divide-y divide-slate-800/60 p-1">
+                <!-- Notifications loaded dynamically -->
+                <div class="p-4 text-center text-xs text-gray-500">No new notifications</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Name / Avatar -->
+          <div onclick="switchView('profile')" class="cursor-pointer flex items-center gap-2 bg-slate-800/60 border border-slate-700 px-3 py-1.5 rounded-lg hover:border-orange-500 transition">
+            <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-orange-600 to-yellow-500 flex items-center justify-center text-xs font-bold text-black">
+              <i class="fas fa-user"></i>
+            </div>
+            <span class="user-name-display hidden md:inline text-xs font-semibold text-gray-200">Player</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 1: HOME & TOURNAMENTS EXPLORER -->
+  <!-- ============================================================ -->
+  <main id="view-home" class="app-view max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Esports Hero Banner -->
+    <section class="ff-card p-6 md:p-8 mb-8 border-orange-500/30 bg-gradient-to-r from-slate-950 via-[#161f2e] to-slate-950">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div>
+          <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-orange-500/20 text-orange-400 border border-orange-500/40">
+            OFFICIAL FREE FIRE BATTLEGROUNDS
+          </span>
+          <h1 class="text-3xl md:text-5xl font-black text-white mt-3 leading-tight tracking-wide">
+            COMPETE. SURVIVE. <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-yellow-400">WIN REAL CASH.</span>
+          </h1>
+          <p class="text-gray-300 text-sm md:text-base mt-2 max-w-xl">
+            Join the most trusted Free Fire esports platform. Play Solo, Duo, or Squad tournaments in Bermuda, Purgatory & Kalahari with instant UPI withdrawals.
+          </p>
+          <div class="flex flex-wrap gap-4 mt-5">
+            <button onclick="document.getElementById('tournaments-section').scrollIntoView({ behavior: 'smooth' })" class="btn-ff-primary">
+              <i class="fas fa-fire"></i> Join Next Match
+            </button>
+            <button onclick="openDepositModal(100)" class="btn-ff-outline">
+              <i class="fas fa-wallet text-green-400"></i> Add Money to Wallet
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Platform Stats -->
+        <div class="grid grid-cols-2 gap-3 w-full md:w-auto min-w-[280px]">
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+            <div class="text-2xl font-black text-yellow-400 font-heading">₹2,50,000+</div>
+            <div class="text-[11px] text-gray-400 uppercase tracking-wider mt-1">Cash Won</div>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+            <div class="text-2xl font-black text-orange-400 font-heading">15,000+</div>
+            <div class="text-[11px] text-gray-400 uppercase tracking-wider mt-1">Active Gamers</div>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+            <div class="text-2xl font-black text-green-400 font-heading">100%</div>
+            <div class="text-[11px] text-gray-400 uppercase tracking-wider mt-1">Instant UPI Payout</div>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+            <div class="text-2xl font-black text-cyan-400 font-heading">24 / 7</div>
+            <div class="text-[11px] text-gray-400 uppercase tracking-wider mt-1">Live Matches</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tournament Filter & Status Navigation -->
+    <section id="tournaments-section" class="mb-6">
+      
+      <!-- Status Tabs: Upcoming / Live / Completed -->
+      <div class="flex items-center justify-between flex-wrap gap-4 mb-4">
+        <div class="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800">
+          <button data-status="upcoming" onclick="setTournamentStatusTab('upcoming')" class="status-tab-btn active px-4 py-2 rounded-lg font-bold text-xs uppercase bg-orange-600 text-white transition">
+            Upcoming Matches
+          </button>
+          <button data-status="live" onclick="setTournamentStatusTab('live')" class="status-tab-btn px-4 py-2 rounded-lg font-bold text-xs uppercase text-gray-400 hover:text-white bg-slate-800/60 transition flex items-center gap-1.5">
+            <span class="live-dot" style="width:6px; height:6px;"></span> Live Matches
+          </button>
+          <button data-status="completed" onclick="setTournamentStatusTab('completed')" class="status-tab-btn px-4 py-2 rounded-lg font-bold text-xs uppercase text-gray-400 hover:text-white bg-slate-800/60 transition">
+            Completed Results
+          </button>
+        </div>
+
+        <!-- Mode Pill Filter: ALL / SOLO / DUO / SQUAD -->
+        <div class="flex items-center gap-2">
+          <button data-type="ALL" onclick="filterTournamentsByType('ALL')" class="filter-type-btn px-3 py-1.5 rounded-lg border border-orange-500 bg-orange-500/20 text-orange-400 font-bold text-xs font-heading">
+            ALL
+          </button>
+          <button data-type="SOLO" onclick="filterTournamentsByType('SOLO')" class="filter-type-btn px-3 py-1.5 rounded-lg border border-transparent text-gray-400 hover:text-white font-bold text-xs font-heading">
+            SOLO
+          </button>
+          <button data-type="DUO" onclick="filterTournamentsByType('DUO')" class="filter-type-btn px-3 py-1.5 rounded-lg border border-transparent text-gray-400 hover:text-white font-bold text-xs font-heading">
+            DUO
+          </button>
+          <button data-type="SQUAD" onclick="filterTournamentsByType('SQUAD')" class="filter-type-btn px-3 py-1.5 rounded-lg border border-transparent text-gray-400 hover:text-white font-bold text-xs font-heading">
+            SQUAD
+          </button>
+        </div>
+      </div>
+
+      <!-- Tournaments Cards Grid -->
+      <div id="tournaments-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Rendered dynamically via app.js -->
+        <div class="col-span-full py-12 text-center text-gray-500">
+          <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+          <p>Loading tournaments...</p>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 2: MY MATCHES & ROOM ID ACCESS -->
+  <!-- ============================================================ -->
+  <main id="view-matches" class="app-view hidden max-w-4xl mx-auto px-4 py-6">
+    
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h2 class="text-2xl font-black text-white font-heading">My Tournament Matches</h2>
+        <p class="text-sm text-gray-400">View matches you registered for, check assigned slots & get Room ID / Password.</p>
+      </div>
+      <button onclick="loadMyMatches()" class="btn-ff-outline text-xs">
+        <i class="fas fa-sync-alt"></i> Refresh
+      </button>
+    </div>
+
+    <!-- Logged out notice -->
+    <div id="matches-logged-out" class="hidden text-center py-16 bg-slate-900/60 rounded-xl border border-slate-800">
+      <i class="fas fa-lock text-3xl text-orange-400 mb-3"></i>
+      <h3 class="text-lg font-bold text-white">Login to view your joined matches</h3>
+      <p class="text-sm text-gray-400 mt-1 mb-4">Track your tournament entries and unlock live match room credentials.</p>
+      <button onclick="openAuthModal('login')" class="btn-ff-primary">Login Now</button>
+    </div>
+
+    <!-- Matches List Container -->
+    <div id="matches-container" class="space-y-4">
+      <!-- Injected dynamically -->
+    </div>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 3: WALLET & PAYMENTS (UPI DEPOSITS & WITHDRAWALS) -->
+  <!-- ============================================================ -->
+  <main id="view-wallet" class="app-view hidden max-w-4xl mx-auto px-4 py-6">
+    
+    <!-- Logged out notice -->
+    <div id="wallet-view-logged-out" class="hidden text-center py-16 bg-slate-900/60 rounded-xl border border-slate-800">
+      <i class="fas fa-wallet text-3xl text-orange-400 mb-3"></i>
+      <h3 class="text-lg font-bold text-white">Login to access your wallet</h3>
+      <p class="text-sm text-gray-400 mt-1 mb-4">Manage balances, deposit cash via UPI, and submit instant withdrawal requests.</p>
+      <button onclick="openAuthModal('login')" class="btn-ff-primary">Login Now</button>
+    </div>
+
+    <!-- Logged in wallet view -->
+    <div id="wallet-view-logged-in" class="space-y-6">
+
+      <!-- Glowing Wallet Balance Card -->
+      <div class="ff-card p-6 md:p-8 bg-gradient-to-br from-slate-950 via-[#182232] to-slate-950 border-orange-500/40">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <div class="text-xs uppercase font-bold text-gray-400 tracking-wider">Total Available Balance</div>
+            <div class="user-balance-val text-4xl md:text-5xl font-black text-green-400 font-heading mt-1">₹0.00</div>
+            <div class="flex items-center gap-4 mt-3 text-xs text-gray-400">
+              <span>Winning Balance (Withdrawable): <strong class="user-winning-val text-yellow-400 font-bold">₹0.00</strong></span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <button onclick="openDepositModal()" class="btn-ff-primary flex-1 md:flex-initial">
+              <i class="fas fa-plus-circle"></i> Add Money
+            </button>
+            <button onclick="openWithdrawalModal()" class="btn-ff-outline flex-1 md:flex-initial">
+              <i class="fas fa-arrow-circle-up text-amber-400"></i> Withdraw
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Withdrawal Status & Pending Requests -->
+      <div class="ff-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-bold text-white font-heading">Withdrawal Requests Status</h3>
+          <span class="text-xs text-gray-400">Min. ₹50</span>
+        </div>
+        <div id="withdrawals-history-list">
+          <div class="text-xs text-gray-500">Loading withdrawals...</div>
+        </div>
+      </div>
+
+      <!-- Transaction History Table -->
+      <div class="ff-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold text-white font-heading">Transaction History</h3>
+          <span class="text-xs text-gray-400">All Deposits, Entry Fees & Cash Prizes</span>
+        </div>
+        <div id="transactions-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 4: USER PROFILE & STATS -->
+  <!-- ============================================================ -->
+  <main id="view-profile" class="app-view hidden max-w-4xl mx-auto px-4 py-6">
+
+    <!-- Logged out notice -->
+    <div id="profile-logged-out" class="hidden text-center py-16 bg-slate-900/60 rounded-xl border border-slate-800">
+      <i class="fas fa-user-circle text-3xl text-orange-400 mb-3"></i>
+      <h3 class="text-lg font-bold text-white">Login to view profile</h3>
+      <button onclick="openAuthModal('login')" class="btn-ff-primary mt-4">Login Now</button>
+    </div>
+
+    <!-- Logged in profile -->
+    <div id="profile-logged-in" class="space-y-6">
+
+      <!-- Player ID Header Card -->
+      <div class="ff-card p-6 flex flex-col md:flex-row items-center gap-6">
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-orange-600 via-yellow-500 to-red-600 flex items-center justify-center text-3xl text-black font-black font-heading shadow-lg shadow-orange-500/20">
+          <i class="fas fa-crosshairs"></i>
+        </div>
+        <div class="text-center md:text-left flex-1">
+          <h2 class="user-name-display text-2xl font-black text-white font-heading">Player Name</h2>
+          <div class="flex flex-wrap justify-center md:justify-start gap-3 mt-1 text-xs">
+            <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-orange-400 font-mono">
+              IGN: <strong class="user-ign-display">FF_PLAYER</strong>
+            </span>
+            <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-cyan-400 font-mono">
+              UID: <strong class="user-uid-display">10000000</strong>
+            </span>
+          </div>
+        </div>
+        <div>
+          <button onclick="api.logout()" class="px-4 py-2 rounded-lg bg-red-600/20 border border-red-500/40 text-red-400 hover:bg-red-600 hover:text-white font-bold text-xs uppercase transition">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Esports Career Statistics Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="ff-card p-4 text-center">
+          <div id="stat-total-matches" class="text-2xl font-black text-white font-heading">0</div>
+          <div class="text-xs text-gray-400 uppercase tracking-wider mt-1">Tournaments</div>
+        </div>
+        <div class="ff-card p-4 text-center">
+          <div id="stat-booyahs" class="text-2xl font-black text-yellow-400 font-heading">0</div>
+          <div class="text-xs text-gray-400 uppercase tracking-wider mt-1">Booyahs (1st)</div>
+        </div>
+        <div class="ff-card p-4 text-center">
+          <div id="stat-total-kills" class="text-2xl font-black text-orange-400 font-heading">0</div>
+          <div class="text-xs text-gray-400 uppercase tracking-wider mt-1">Total Kills</div>
+        </div>
+        <div class="ff-card p-4 text-center">
+          <div id="stat-total-winnings" class="text-2xl font-black text-green-400 font-heading">₹0.00</div>
+          <div class="text-xs text-gray-400 uppercase tracking-wider mt-1">Total Won</div>
+        </div>
+      </div>
+
+      <!-- Account Details & Free Fire In-Game Name/UID Edit -->
+      <div class="ff-card p-6">
+        <h3 class="text-lg font-bold text-white font-heading mb-4">Edit Game Details</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Full Name</label>
+            <input type="text" id="profile-name-input" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Free Fire In-Game Name (IGN)</label>
+            <input type="text" id="profile-ign-input" placeholder="e.g. SC_PRO_KILLER" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Free Fire Character UID</label>
+            <input type="text" id="profile-uid-input" placeholder="e.g. 584920491" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Registered Email</label>
+            <div id="profile-email-display" class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2 text-sm text-gray-400">user@example.com</div>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Registered Mobile</label>
+            <div id="profile-mobile-display" class="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2 text-sm text-gray-400">9876543210</div>
+          </div>
+        </div>
+
+        <button onclick="saveProfile()" class="btn-ff-primary">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: JOIN TOURNAMENT -->
+  <!-- ============================================================ -->
+  <div id="join-modal" class="modal-backdrop">
+    <div class="modal-content p-6">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <h3 id="join-tourn-title" class="text-lg font-bold text-white font-heading">Join Tournament</h3>
+          <span id="join-tourn-map" class="text-xs text-orange-400 font-semibold">Bermuda • SOLO</span>
+        </div>
+        <button onclick="closeJoinModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <div class="py-4 space-y-4">
+        <!-- Balance Check Pill -->
+        <div class="flex justify-between items-center p-3 rounded-lg bg-slate-900 border border-slate-800">
+          <div>
+            <div class="text-[11px] text-gray-400 uppercase">Entry Fee</div>
+            <div id="join-entry-fee" class="text-lg font-bold text-cyan-400 font-heading">₹20.00</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[11px] text-gray-400 uppercase">Your Wallet Balance</div>
+            <div id="join-user-bal" class="text-lg font-bold text-green-400 font-heading">₹100.00</div>
+          </div>
+        </div>
+
+        <!-- Player Game Info Inputs -->
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Your Free Fire In-Game Name (IGN) *</label>
+          <input type="text" id="join-ign-input" placeholder="e.g. SC_LEADER" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Your Free Fire Character UID *</label>
+          <input type="text" id="join-uid-input" placeholder="e.g. 584920491" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <!-- Dynamic Teammates inputs if Duo / Squad -->
+        <div id="join-team-members-container"></div>
+
+        <!-- Rules notice -->
+        <div class="text-[11px] text-gray-400 bg-slate-900/50 p-2.5 rounded border border-slate-800">
+          <i class="fas fa-info-circle text-orange-400"></i> The entry fee will be deducted directly from your wallet balance. Room ID & Password will be revealed 15 minutes before match start.
+        </div>
+      </div>
+
+      <div class="pt-2 flex flex-col gap-2">
+        <button id="btn-confirm-join" onclick="confirmJoinTournament()" class="btn-ff-primary w-full">
+          Confirm & Pay
+        </button>
+        <button id="join-add-money-btn" onclick="closeJoinModal(); openDepositModal();" class="hidden btn-ff-outline w-full text-center">
+          <i class="fas fa-plus"></i> Add Money to Wallet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: REAL-TIME TOURNAMENT SLOT SELECTOR (JOINED USERS ONLY)-->
+  <!-- ============================================================ -->
+  <div id="slot-select-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-2xl w-full">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="live-pulse"><span class="live-dot"></span> LIVE SLOTS</span>
+            <span id="slot-modal-match-type" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-orange-400 border border-slate-700">SOLO</span>
+          </div>
+          <h3 id="slot-modal-tourn-title" class="text-lg font-bold text-white font-heading mt-1">Select Your Room Slot</h3>
+          <p class="text-xs text-gray-400">Pick any available seat in the custom room. Sold out slots are updated in real time.</p>
+        </div>
+        <button onclick="closeSlotSelectModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <div class="py-4 space-y-4">
+        <!-- Slot Legend & Stats -->
+        <div class="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-900/90 rounded-xl border border-slate-800 text-xs">
+          <div class="flex items-center gap-4">
+            <span class="flex items-center gap-1.5 text-green-400 font-semibold">
+              <span class="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span> Available
+            </span>
+            <span class="flex items-center gap-1.5 text-red-400 font-semibold">
+              <span class="w-3 h-3 rounded-full bg-rose-600 shadow-sm shadow-rose-600/50"></span> Sold Out
+            </span>
+            <span class="flex items-center gap-1.5 text-purple-400 font-semibold">
+              <span class="w-3 h-3 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50"></span> Your Seat
+            </span>
+          </div>
+          <div id="slot-modal-stats" class="text-gray-300 font-mono text-[11px]">
+            <!-- Joined / Total slots -->
+          </div>
+        </div>
+
+        <!-- Scrollable Slot Grid -->
+        <div id="slot-grid-container" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5 max-h-80 overflow-y-auto p-2 bg-slate-950/70 rounded-xl border border-slate-800">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="text-[11px] text-gray-400 bg-slate-900/50 p-2.5 rounded-lg border border-slate-800 flex items-center justify-between">
+          <span><i class="fas fa-shield-alt text-yellow-400"></i> Sit in this exact slot inside Free Fire custom lobby to avoid being kicked.</span>
+          <span class="text-green-400 font-mono flex items-center gap-1"><i class="fas fa-bolt text-yellow-400"></i> Real-time Sync</span>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button onclick="closeSlotSelectModal()" class="btn-ff-outline px-6 py-2 text-xs">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: EDIT FREE FIRE PLAYER NAME & CHARACTER UID (JOINED)   -->
+  <!-- ============================================================ -->
+  <div id="edit-player-info-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-md w-full">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-lg font-bold text-white font-heading flex items-center gap-2">
+            <i class="fas fa-user-edit text-orange-500"></i> Edit Free Fire Player Info
+          </h3>
+          <span id="edit-player-tourn-title" class="text-xs text-orange-400 font-semibold"></span>
+        </div>
+        <button onclick="closeEditPlayerInfoModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <form onsubmit="submitEditPlayerInfo(event)" class="py-4 space-y-4">
+        <input type="hidden" id="edit-player-tourn-id" />
+
+        <div class="p-3 bg-slate-900 rounded-lg border border-slate-800 flex justify-between items-center">
+          <span class="text-xs text-gray-400">Current Assigned Slot:</span>
+          <span id="edit-player-current-slot" class="text-sm font-bold text-purple-400 font-mono">Slot #--</span>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Free Fire In-Game Name (IGN) *</label>
+          <input type="text" id="edit-player-ign" required placeholder="e.g. SC_SNIPER" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-orange-500 focus:outline-none" />
+          <span class="text-[10px] text-gray-500 mt-1 block">Exact nickname shown in your Free Fire profile</span>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Free Fire Character UID (Numeric) *</label>
+          <input type="text" id="edit-player-uid" required placeholder="e.g. 192847192" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-orange-500 focus:outline-none" />
+          <span class="text-[10px] text-gray-500 mt-1 block">Your 8-10 digit Free Fire Player UID</span>
+        </div>
+
+        <!-- Teammates container if DUO or SQUAD -->
+        <div id="edit-teammates-container" class="space-y-2"></div>
+
+        <div class="text-[11px] text-gray-400 bg-slate-900/60 p-2.5 rounded border border-slate-800">
+          <i class="fas fa-info-circle text-cyan-400"></i> Updating your player credentials ensures the host verifies your identity and distributes prizes to your account.
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeEditPlayerInfoModal()" class="btn-ff-outline flex-1 py-2 text-xs">
+            Cancel
+          </button>
+          <button type="submit" id="btn-save-player-info" class="btn-ff-primary flex-1 py-2 text-xs">
+            <i class="fas fa-check"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: ADD MONEY / COMPLETE UPI WALLET DEPOSIT INTEGRATION   -->
+  <!-- ============================================================ -->
+  <div id="deposit-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-lg w-full">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-lg">
+            <i class="fas fa-qrcode"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white font-heading">Add Money to Wallet</h3>
+            <p class="text-[11px] text-gray-400">Direct Dynamic UPI Deposit &bull; Official NPCI QR</p>
+          </div>
+        </div>
+        <button onclick="closeDepositModal()" class="text-gray-400 hover:text-white p-1">
+          <i class="fas fa-times text-lg"></i>
+        </button>
+      </div>
+
+      <!-- STAGE 1: AMOUNT SELECTION -->
+      <div id="upi-stage-amount" class="py-4 space-y-4">
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-2">Deposit Amount (₹ INR)</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-orange-400 font-bold text-lg">₹</span>
+            <input type="number" id="deposit-amount-input" min="10" max="50000" value="100" class="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xl font-black text-white font-heading focus:border-orange-500 focus:outline-none transition" />
+          </div>
+          <span class="text-[11px] text-gray-500 mt-1 block">Minimum: ₹10 &bull; Maximum: ₹50,000</span>
+        </div>
+
+        <!-- Quick Preset Amount Buttons: 50, 100, 200, 500, 1000 -->
+        <div>
+          <label class="text-[11px] font-semibold text-gray-400 block mb-1.5 uppercase tracking-wider">Quick Select</label>
+          <div class="grid grid-cols-5 gap-2">
+            <button type="button" onclick="setDepositAmount(50)" class="py-2 bg-slate-800 hover:bg-orange-500 hover:text-black text-white font-bold text-xs rounded-lg border border-slate-700 transition">₹50</button>
+            <button type="button" onclick="setDepositAmount(100)" class="py-2 bg-slate-800 hover:bg-orange-500 hover:text-black text-white font-bold text-xs rounded-lg border border-slate-700 transition">₹100</button>
+            <button type="button" onclick="setDepositAmount(200)" class="py-2 bg-slate-800 hover:bg-orange-500 hover:text-black text-white font-bold text-xs rounded-lg border border-slate-700 transition">₹200</button>
+            <button type="button" onclick="setDepositAmount(500)" class="py-2 bg-slate-800 hover:bg-orange-500 hover:text-black text-white font-bold text-xs rounded-lg border border-slate-700 transition">₹500</button>
+            <button type="button" onclick="setDepositAmount(1000)" class="py-2 bg-slate-800 hover:bg-orange-500 hover:text-black text-white font-bold text-xs rounded-lg border border-slate-700 transition">₹1000</button>
+          </div>
+        </div>
+
+        <!-- Supported UPI Apps Badge -->
+        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2 text-xs">
+          <div class="flex items-center justify-between text-gray-300">
+            <span class="flex items-center gap-1.5"><i class="fas fa-check-circle text-green-400"></i> Supported UPI Apps:</span>
+            <span class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1"><i class="fas fa-shield-alt"></i> Automated Gateway</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 pt-0.5">
+            <span class="px-2 py-0.5 rounded bg-slate-800 text-white text-[11px] font-semibold border border-slate-700"><i class="fab fa-google text-blue-400"></i> Google Pay</span>
+            <span class="px-2 py-0.5 rounded bg-slate-800 text-white text-[11px] font-semibold border border-slate-700"><i class="fas fa-mobile-alt text-purple-400"></i> PhonePe</span>
+            <span class="px-2 py-0.5 rounded bg-slate-800 text-white text-[11px] font-semibold border border-slate-700"><i class="fas fa-wallet text-cyan-400"></i> Paytm UPI</span>
+            <span class="px-2 py-0.5 rounded bg-slate-800 text-white text-[11px] font-semibold border border-slate-700"><i class="fas fa-university text-emerald-400"></i> BHIM / Any UPI</span>
+          </div>
+        </div>
+
+        <button id="btn-generate-upi" onclick="initiateUpiDeposit()" class="btn-ff-primary w-full py-3 text-sm flex items-center justify-center gap-2">
+          <i class="fas fa-qrcode"></i> Generate Dynamic UPI QR & Pay
+        </button>
+      </div>
+
+      <!-- STAGE 2: DYNAMIC UPI PAYMENT SCREEN -->
+      <div id="upi-stage-payment" class="hidden py-3 space-y-4">
+        
+        <!-- Order Header & Timer -->
+        <div class="flex items-center justify-between bg-slate-900/90 p-3 rounded-lg border border-slate-800">
+          <div>
+            <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Order ID</div>
+            <div id="upi-order-id-display" class="font-mono text-xs font-bold text-orange-400">SCG-UPI-XXXX</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Expires In</div>
+            <div id="upi-countdown-timer" class="font-mono text-sm font-black text-yellow-400">14:59</div>
+          </div>
+        </div>
+
+        <!-- Amount & Dynamic QR Code Container -->
+        <div class="text-center bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-inner">
+          <div class="text-xs text-gray-400">Pay Exact Amount:</div>
+          <div id="upi-amount-display" class="text-3xl font-black text-green-400 font-heading my-1">₹100.00</div>
+
+          <!-- Dynamic QR Code Image -->
+          <div class="inline-block p-2 bg-white rounded-xl shadow-lg my-2">
+            <img id="upi-qr-image" src="" alt="Dynamic UPI QR" class="w-48 h-48 md:w-56 md:h-56 mx-auto object-contain" />
+          </div>
+
+          <!-- Payment Security Badge & Download QR -->
+          <div class="mt-2 flex items-center justify-center gap-2 flex-wrap">
+            <div class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-emerald-400 flex items-center gap-2 font-medium">
+              <i class="fas fa-shield-alt text-emerald-400"></i>
+              <span>Official SC GAMEING Gateway</span>
+            </div>
+            <a id="btn-download-qr" download="scgameing-upi-qr.png" href="#" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5 border border-slate-700">
+              <i class="fas fa-download"></i> Save QR
+            </a>
+          </div>
+          <!-- Hidden placeholder to preserve script compatibility -->
+          <span id="upi-id-display" class="hidden"></span>
+
+          <!-- Direct UPI Intent App Launchers -->
+          <div class="mt-3 space-y-2">
+            <a id="btn-open-upi-app" href="#" class="btn-ff-primary w-full py-3 text-xs md:text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-95 transition">
+              <i class="fas fa-bolt text-yellow-400"></i> Open & Pay via UPI App (Tap to Pay)
+            </a>
+
+            <!-- Direct Quick App Buttons for PhonePe, Paytm, Google Pay -->
+            <div class="grid grid-cols-3 gap-2">
+              <a id="btn-open-phonepe" href="#" class="py-2 px-1 bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/40 rounded-lg text-center text-[11px] font-bold text-purple-300 flex items-center justify-center gap-1 transition active:scale-95">
+                <i class="fas fa-mobile-alt text-purple-400"></i> PhonePe
+              </a>
+              <a id="btn-open-paytm" href="#" class="py-2 px-1 bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 rounded-lg text-center text-[11px] font-bold text-cyan-300 flex items-center justify-center gap-1 transition active:scale-95">
+                <i class="fas fa-wallet text-cyan-400"></i> Paytm
+              </a>
+              <a id="btn-open-gpay" href="#" class="py-2 px-1 bg-blue-950/60 hover:bg-blue-900/80 border border-blue-500/40 rounded-lg text-center text-[11px] font-bold text-blue-300 flex items-center justify-center gap-1 transition active:scale-95">
+                <i class="fab fa-google text-blue-400"></i> Google Pay
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification Status Indicator -->
+        <div id="upi-status-box" class="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
+          <div class="flex items-center justify-center gap-2 text-xs font-bold text-yellow-400">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <span id="upi-status-text">Waiting for payment or UTR submission...</span>
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1">Scan QR or tap any UPI app above, then enter the 12-digit UTR below for verification.</p>
+        </div>
+
+        <!-- UTR / Reference Number Submission Form -->
+        <div class="p-3 bg-slate-900/90 rounded-lg border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-white block">Submit 12-Digit Bank Reference (UTR) Number</label>
+            <button type="button" onclick="toggleUtrHelpGuide()" class="text-[11px] text-orange-400 hover:text-orange-300 font-semibold flex items-center gap-1 transition">
+              <i class="fas fa-question-circle"></i> Need Help? Where to find UTR?
+            </button>
+          </div>
+          <div class="flex gap-2">
+            <input type="text" id="upi-utr-input" placeholder="e.g. 412345678901 (12 digits)" maxlength="22" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white focus:border-orange-500 focus:outline-none" />
+            <button id="btn-submit-utr" onclick="submitUpiUtr()" class="btn-ff-primary px-4 py-2 text-xs whitespace-nowrap font-bold">
+              Submit UTR
+            </button>
+          </div>
+          <p class="text-[10px] text-gray-400">Copy the 12-digit UTR from your PhonePe, Paytm, or GPay receipt and submit above.</p>
+
+          <!-- Interactive Help Accordion / Visual Guide -->
+          <div id="utr-help-guide" class="hidden mt-2 p-3 bg-slate-950 rounded-xl border border-orange-500/30 text-xs space-y-2">
+            <div class="flex items-center justify-between text-orange-400 font-bold border-b border-slate-800 pb-1.5">
+              <span><i class="fas fa-receipt text-yellow-400"></i> How to Find Your 12-Digit UTR Number</span>
+              <button type="button" onclick="toggleUtrHelpGuide()" class="text-gray-400 hover:text-white text-xs">&times; Close</button>
+            </div>
+            
+            <div class="space-y-1.5 text-[11px] text-gray-300">
+              <div class="p-2 rounded bg-slate-900/90 border border-slate-800">
+                <span class="font-bold text-purple-400"><i class="fas fa-mobile-alt"></i> PhonePe:</span>
+                <p class="text-gray-300 mt-0.5">Open Payment Details &rarr; Scroll down to <strong>"UTR"</strong> (12 digits, e.g. <span class="font-mono text-white bg-slate-800 px-1 rounded">412345678901</span>).</p>
+              </div>
+
+              <div class="p-2 rounded bg-slate-900/90 border border-slate-800">
+                <span class="font-bold text-cyan-400"><i class="fas fa-wallet"></i> Paytm:</span>
+                <p class="text-gray-300 mt-0.5">Tap on the payment in passbook &rarr; Look for <strong>"UPI Ref No."</strong> or <strong>"UTR"</strong> (12 digits).</p>
+              </div>
+
+              <div class="p-2 rounded bg-slate-900/90 border border-slate-800">
+                <span class="font-bold text-blue-400"><i class="fab fa-google"></i> Google Pay (GPay):</span>
+                <p class="text-gray-300 mt-0.5">Tap transaction details &rarr; Look for <strong>"UPI transaction ID"</strong> (12 digits).</p>
+              </div>
+
+              <div class="p-2 rounded bg-slate-900/90 border border-slate-800">
+                <span class="font-bold text-emerald-400"><i class="fas fa-university"></i> BHIM / Cred / Other UPI:</span>
+                <p class="text-gray-300 mt-0.5">Look for <strong>"Ref No."</strong>, <strong>"RRN"</strong>, or <strong>"UTR"</strong> on digital receipt.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation back -->
+        <div class="text-center pt-1">
+          <button onclick="backToAmountStage()" class="text-xs text-gray-400 hover:text-white transition">
+            <i class="fas fa-arrow-left"></i> Change Deposit Amount
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: 30-SECOND UTR VERIFICATION IN PROGRESS NOTICE -->
+  <!-- ============================================================ -->
+  <div id="utr-verification-notice" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border-2 border-orange-500 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl space-y-4">
+      <div class="w-16 h-16 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 mx-auto flex items-center justify-center text-3xl">
+        <i class="fas fa-user-shield animate-pulse"></i>
+      </div>
+      <div>
+        <h3 class="text-xl font-black text-white font-heading">Admin Verifying Payment</h3>
+        <p class="text-sm font-bold text-yellow-400 mt-1">Please allow up to 5 minutes for approval</p>
+      </div>
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-gray-300 text-left space-y-1.5">
+        <div class="flex justify-between text-gray-400 text-[11px]">
+          <span>Submitted UTR:</span>
+          <span id="notice-utr-display" class="font-mono text-cyan-400 font-bold">412345678901</span>
+        </div>
+        <div class="flex justify-between text-gray-400 text-[11px]">
+          <span>Status:</span>
+          <span class="text-yellow-400 font-bold flex items-center gap-1"><i class="fas fa-spinner fa-spin"></i> In Review Queue</span>
+        </div>
+        <p class="text-[11px] text-gray-400 pt-1 border-t border-slate-800">
+          Your UTR reference has been successfully submitted to the admin queue. Our team is verifying your payment with the bank. Your wallet will be credited automatically.
+        </p>
+      </div>
+      <!-- 30-Second Countdown Indicator -->
+      <div class="space-y-1.5 pt-1">
+        <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+          <div id="notice-progress-bar" class="bg-gradient-to-r from-orange-500 to-yellow-400 h-full w-full transition-all duration-1000"></div>
+        </div>
+        <div class="flex items-center justify-between text-[11px] text-gray-400">
+          <span>Notice automatically closes in:</span>
+          <span id="notice-timer" class="font-mono font-bold text-orange-400">30s</span>
+        </div>
+      </div>
+      <button type="button" onclick="dismissUtrVerificationNotice()" class="btn-ff-primary w-full py-3 text-xs font-bold">
+        <i class="fas fa-check-circle"></i> Done / Continue
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: WITHDRAWAL REQUEST -->
+  <!-- ============================================================ -->
+  <div id="withdrawal-modal" class="modal-backdrop">
+    <div class="modal-content p-6">
+      
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <h3 class="text-lg font-bold text-white font-heading">Withdraw Cash</h3>
+        <button onclick="closeWithdrawalModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <div class="py-4 space-y-4">
+        <div class="p-3 bg-slate-900 rounded-lg border border-slate-800 flex justify-between items-center">
+          <span class="text-xs text-gray-400">Available Balance:</span>
+          <span id="wth-available-balance" class="text-lg font-bold text-green-400 font-heading">₹0.00</span>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Withdrawal Amount (Min. ₹50) *</label>
+          <div class="relative">
+            <span class="absolute left-3 top-2 text-gray-400 font-bold">₹</span>
+            <input type="number" id="wth-amount-input" min="50" max="10000" placeholder="50" class="w-full pl-8 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white font-bold" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Your UPI ID (VPA) *</label>
+          <input type="text" id="wth-upi-input" placeholder="e.g. yourname@okaxis, 9876543210@paytm" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono" />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Account Holder Name *</label>
+          <input type="text" id="wth-name-input" placeholder="Name as per UPI" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <div class="text-[11px] text-gray-400 bg-slate-900/50 p-2.5 rounded border border-slate-800">
+          <i class="fas fa-info-circle text-yellow-400"></i> Withdrawals are reviewed by SC GAMEING admin and transferred directly to your UPI ID within a few hours.
+        </div>
+      </div>
+
+      <button id="btn-submit-wth" onclick="submitWithdrawalRequest()" class="btn-ff-primary w-full">
+        Submit Withdrawal Request
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: ROOM ID & PASSWORD REVEAL -->
+  <!-- ============================================================ -->
+  <div id="room-modal" class="modal-backdrop">
+    <div class="modal-content p-6">
+      
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <span class="live-pulse"><span class="live-dot"></span> MATCH READY</span>
+          <h3 id="room-modal-title" class="text-lg font-bold text-white font-heading mt-1">Room Credentials</h3>
+        </div>
+        <button onclick="closeRoomModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <div class="py-6 space-y-4">
+        
+        <!-- Room ID Card -->
+        <div class="p-4 bg-slate-900 rounded-xl border border-orange-500/40 flex justify-between items-center">
+          <div>
+            <div class="text-[11px] text-gray-400 uppercase tracking-wider">Custom Room ID</div>
+            <div id="room-id-val" class="text-2xl font-black text-white font-mono tracking-widest mt-0.5">---</div>
+          </div>
+          <button onclick="copyText('room-id-val', 'Room ID')" class="btn-ff-outline text-xs">
+            <i class="fas fa-copy"></i> Copy ID
+          </button>
+        </div>
+
+        <!-- Room Password Card -->
+        <div class="p-4 bg-slate-900 rounded-xl border border-orange-500/40 flex justify-between items-center">
+          <div>
+            <div class="text-[11px] text-gray-400 uppercase tracking-wider">Room Password</div>
+            <div id="room-pass-val" class="text-2xl font-black text-yellow-400 font-mono tracking-widest mt-0.5">---</div>
+          </div>
+          <button onclick="copyText('room-pass-val', 'Room Password')" class="btn-ff-outline text-xs">
+            <i class="fas fa-copy"></i> Copy Pass
+          </button>
+        </div>
+
+        <!-- Instructions -->
+        <div class="text-xs text-gray-300 bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-1.5">
+          <div class="font-bold text-orange-400 uppercase">How to Join Custom Room in Free Fire:</div>
+          <div>1. Open <strong>Free Fire / Free Fire MAX</strong>.</div>
+          <div>2. Tap on <strong>Game Mode Selection &gt; Custom</strong>.</div>
+          <div>3. Paste the <strong>Room ID</strong> in the search bar.</div>
+          <div>4. Enter the <strong>Room Password</strong> and click Join.</div>
+          <div>5. Sit strictly in your assigned slot number!</div>
+        </div>
+
+      </div>
+
+      <button onclick="closeRoomModal()" class="btn-ff-primary w-full">
+        I am Ready, Close
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: RESULTS / LEADERBOARD -->
+  <!-- ============================================================ -->
+  <div id="results-modal" class="modal-backdrop">
+    <div class="modal-content p-6">
+      
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <span class="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs font-bold">MATCH RESULTS</span>
+          <h3 id="results-modal-title" class="text-lg font-bold text-white font-heading mt-1">Leaderboard</h3>
+        </div>
+        <button onclick="closeResultsModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <div class="py-4">
+        <div id="results-participants-list" class="space-y-1 max-h-96 overflow-y-auto">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <button onclick="closeResultsModal()" class="btn-ff-outline w-full">
+        Close Results
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: TRANSACTION RECEIPT VIEWER -->
+  <!-- ============================================================ -->
+  <div id="receipt-modal" class="modal-backdrop">
+    <div class="modal-content p-6">
+      
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <h3 class="text-lg font-bold text-white font-heading">Transaction Receipt</h3>
+        <button onclick="closeReceiptModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <div id="printable-receipt-area" class="py-4 space-y-4">
+        <div class="text-center pb-3 border-b border-slate-800">
+          <div class="text-xl font-black text-white font-heading">SC GAMEING ESPORTS</div>
+          <div class="text-xs text-gray-400">Official Payment & Tournament Receipt</div>
+          <div id="receipt-id" class="text-xs font-mono text-orange-400 mt-1">SCG-TXN-123456</div>
+        </div>
+
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-gray-400">Date & Time:</span>
+            <span id="receipt-date" class="text-white font-semibold"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Player:</span>
+            <span id="receipt-customer" class="text-white font-semibold"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Transaction Type:</span>
+            <span id="receipt-type" class="text-white font-semibold uppercase"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Details:</span>
+            <span id="receipt-desc" class="text-white font-semibold"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Reference / UTR:</span>
+            <span id="receipt-ref" class="text-white font-mono"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Status:</span>
+            <span id="receipt-status" class="text-green-400 font-bold uppercase"></span>
+          </div>
+          <div class="flex justify-between pt-2 border-t border-slate-800 text-sm">
+            <span class="text-gray-300 font-bold">Total Amount:</span>
+            <span id="receipt-amount" class="text-green-400 font-black font-heading text-lg"></span>
+          </div>
+          <div class="flex justify-between text-xs text-gray-400">
+            <span>Wallet Balance After:</span>
+            <span id="receipt-balance-after" class="text-white font-semibold"></span>
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded bg-slate-900 border border-slate-800 text-center text-[10px] text-gray-500">
+          Official receipt issued by SC GAMEING • Automated Gateway Payment • Support: support@scgameing.com
+        </div>
+      </div>
+
+      <div class="pt-2 flex gap-3">
+        <button onclick="printReceipt()" class="btn-ff-primary flex-1">
+          <i class="fas fa-print"></i> Print Receipt
+        </button>
+        <button onclick="closeReceiptModal()" class="btn-ff-outline flex-1">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: AUTHENTICATION (LOGIN / SIGNUP / RESET PASSWORD) -->
+  <!-- ============================================================ -->
+  <div id="auth-modal" class="modal-backdrop">
+    <div class="modal-content p-6">
+      
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <h3 class="text-xl font-black text-white font-heading">SC GAMEING ARENA</h3>
+        <button onclick="closeAuthModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="flex border-b border-slate-800 my-4 text-xs font-bold uppercase font-heading">
+        <button onclick="switchAuthTab('login')" class="flex-1 py-2 text-center text-orange-400 border-b-2 border-orange-500">
+          Login
+        </button>
+        <button onclick="switchAuthTab('signup')" class="flex-1 py-2 text-center text-gray-400 hover:text-white">
+          Register (+₹10 Bonus)
+        </button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form-container" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Email or Mobile Number</label>
+          <input type="text" id="login-identifier" required placeholder="Enter your email or 10-digit mobile" autocomplete="username" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-xs font-semibold text-gray-300">Password</label>
+            <a href="#" onclick="switchAuthTab('forgot')" class="text-xs text-orange-400 hover:underline">Forgot?</a>
+          </div>
+          <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <button type="submit" id="btn-submit-login" class="btn-ff-primary w-full">
+          Login to Arena
+        </button>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signup-form-container" onsubmit="handleRegister(event)" class="hidden space-y-3">
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Full Name *</label>
+          <input type="text" id="signup-name" required placeholder="Your full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Email Address *</label>
+            <input type="email" id="signup-email" required placeholder="name@email.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">10-Digit Mobile *</label>
+            <input type="tel" id="signup-mobile" required pattern="[0-9]{10}" placeholder="9876543210" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Free Fire IGN (Optional)</label>
+            <input type="text" id="signup-ign" placeholder="In-Game Name" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Free Fire UID (Optional)</label>
+            <input type="text" id="signup-uid" placeholder="Character UID" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Password (Min. 6 chars) *</label>
+          <input type="password" id="signup-password" minlength="6" required placeholder="Create a strong password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <button type="submit" id="btn-submit-signup" class="btn-ff-primary w-full mt-2">
+          Create Account & Claim ₹10 Bonus
+        </button>
+      </form>
+
+      <!-- Forgot & Reset Password Form -->
+      <div id="forgot-form-container" class="hidden space-y-4">
+        <form onsubmit="handleForgotPassword(event)" class="space-y-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Enter your registered email address</label>
+            <input type="email" id="forgot-email" required placeholder="user@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+          <button type="submit" class="btn-ff-primary w-full text-xs">
+            Send Reset Code
+          </button>
+        </form>
+
+        <form id="reset-section" onsubmit="handleResetPassword(event)" class="hidden space-y-3 pt-3 border-t border-slate-800">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">6-Digit Reset Code</label>
+            <input type="text" id="reset-code" required placeholder="123456" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono" />
+          </div>
+
+          <!-- Timer & 1-Minute Cooldown -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs text-gray-400 bg-slate-950 p-2 rounded border border-slate-800">
+              <span class="flex items-center gap-1.5"><i class="fas fa-shield-alt text-amber-400"></i> Code Valid:</span>
+              <strong id="modal-otp-timer-val" class="text-orange-400 font-mono font-bold">05:00</strong>
+            </div>
+
+            <div id="modal-resend-cooldown-box" class="p-2.5 bg-orange-500/10 border border-orange-500/30 rounded-lg text-center space-y-0.5">
+              <div class="text-[11px] text-gray-300 font-medium flex items-center justify-center gap-1">
+                <i class="fas fa-hourglass-half text-orange-400 animate-spin"></i> Resend OTP available in:
+              </div>
+              <div class="text-lg font-mono font-black text-orange-400" id="modal-resend-timer-display">01:00</div>
+              <div class="text-[10px] text-gray-400 font-mono">(<span id="modal-resend-seconds-num">60</span>s remaining)</div>
+            </div>
+
+            <button type="button" id="btn-modal-resend-otp" onclick="resendModalOtp()" class="hidden w-full py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-xs rounded-lg uppercase tracking-wider flex items-center justify-center gap-1.5 animate-pulse transition">
+              <i class="fas fa-redo"></i> Send Again OTP
+            </button>
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">New Password</label>
+            <input type="password" id="reset-new-password" minlength="6" required placeholder="New password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+          </div>
+          <button type="submit" class="btn-ff-success w-full text-xs">
+            Confirm Password Reset
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MOBILE BOTTOM NAVIGATION BAR -->
+  <!-- ============================================================ -->
+  <nav class="bottom-nav md:hidden">
+    <a href="#" data-view="home" class="nav-item active">
+      <i class="fas fa-fire"></i>
+      <span>Tourneys</span>
+    </a>
+    <a href="#" data-view="matches" class="nav-item">
+      <i class="fas fa-gamepad"></i>
+      <span>Matches</span>
+    </a>
+    <a href="#" data-view="wallet" class="nav-item">
+      <i class="fas fa-wallet"></i>
+      <span>Wallet</span>
+    </a>
+    <a href="#" data-view="profile" class="nav-item">
+      <i class="fas fa-user-circle"></i>
+      <span>Profile</span>
+    </a>
+    <a href="/admin" class="nav-item admin-nav-item hidden text-yellow-400">
+      <i class="fas fa-shield-alt"></i>
+      <span>Admin</span>
+    </a>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- FLOATING LIVE CHAT CUSTOMER SERVICE WIDGET                  -->
+  <!-- ============================================================ -->
+  <!-- Floating Launcher Button -->
+  <button id="live-chat-launcher" onclick="toggleLiveChat()" aria-label="Open 24/7 Live Customer Support">
+    <div class="relative">
+      <i class="fas fa-headset text-lg"></i>
+      <span id="chat-unread-badge" class="hidden absolute -top-2 -right-2 w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-black flex items-center justify-center border-2 border-[#090C10]">0</span>
+    </div>
+    <span class="launcher-text text-xs font-bold font-heading tracking-wide">Live Support</span>
+  </button>
+
+  <!-- Live Chat Widget Modal / Card -->
+  <div id="live-chat-widget" role="dialog" aria-modal="true" aria-labelledby="chat-header-title">
+    <!-- Chat Header -->
+    <div class="p-4 bg-gradient-to-r from-[#121824] to-[#1a2334] border-b border-orange-500/30 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-yellow-500 flex items-center justify-center text-black font-black text-lg shadow-md shadow-orange-500/20">
+            <i class="fas fa-headset"></i>
+          </div>
+          <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#121824] rounded-full"></span>
+        </div>
+        <div>
+          <h2 id="chat-header-title" class="text-sm font-black text-white font-heading tracking-wide flex items-center gap-2">
+            SC GAMEING Support
+            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-green-500/20 text-green-400 border border-green-500/40">24/7 LIVE</span>
+          </h2>
+          <p class="text-[11px] text-gray-400">Esports Desk & Player Assistance</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="refreshLiveChat()" title="Refresh Chat" class="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-sync-alt text-xs"></i>
+        </button>
+        <button onclick="toggleLiveChat()" title="Close Chat" class="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Status Ticker Banner -->
+    <div class="bg-orange-500/10 border-b border-orange-500/20 px-3 py-1.5 flex items-center justify-between text-[11px] text-orange-300">
+      <span class="flex items-center gap-1.5">
+        <i class="fas fa-bolt text-yellow-400"></i> Avg. response: <strong>&lt; 2 minutes</strong>
+      </span>
+      <span id="chat-user-label" class="text-[10px] text-gray-400 font-mono">Guest</span>
+    </div>
+
+    <!-- Quick Topics Carousel / Bar -->
+    <div class="p-2.5 bg-[#0b0f16] border-b border-slate-800 flex gap-2 overflow-x-auto no-scrollbar" id="chat-quick-topics">
+      <button onclick="sendQuickTopic('Deposit & UTR Help')" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800/80 hover:bg-orange-600 text-gray-300 hover:text-white whitespace-nowrap transition flex items-center gap-1.5 border border-slate-700">
+        <i class="fas fa-wallet text-green-400"></i> Deposit Help
+      </button>
+      <button onclick="sendQuickTopic('Room ID & Password')" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800/80 hover:bg-orange-600 text-gray-300 hover:text-white whitespace-nowrap transition flex items-center gap-1.5 border border-slate-700">
+        <i class="fas fa-key text-yellow-400"></i> Room ID & Pass
+      </button>
+      <button onclick="sendQuickTopic('Cash Withdrawal')" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800/80 hover:bg-orange-600 text-gray-300 hover:text-white whitespace-nowrap transition flex items-center gap-1.5 border border-slate-700">
+        <i class="fas fa-money-bill-wave text-cyan-400"></i> Withdrawal
+      </button>
+      <button onclick="sendQuickTopic('Rules & Fair Play')" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800/80 hover:bg-orange-600 text-gray-300 hover:text-white whitespace-nowrap transition flex items-center gap-1.5 border border-slate-700">
+        <i class="fas fa-shield-alt text-red-400"></i> Rules
+      </button>
+      <button onclick="sendQuickTopic('Talk to human agent')" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800/80 hover:bg-orange-600 text-gray-300 hover:text-white whitespace-nowrap transition flex items-center gap-1.5 border border-slate-700">
+        <i class="fas fa-headset text-orange-400"></i> Live Agent
+      </button>
+    </div>
+
+    <!-- Chat Messages Scroll Container -->
+    <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 flex flex-col bg-[#090c12]">
+      <div class="text-center py-6 text-gray-500 text-xs">
+        <i class="fas fa-spinner fa-spin text-orange-500 text-base mb-2"></i>
+        <p>Connecting to Live Support...</p>
+      </div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="chat-typing-indicator" class="hidden px-4 py-1.5 bg-[#0b0f16] border-t border-slate-800/60 text-xs text-orange-400 flex items-center gap-2">
+      <span id="chat-typing-text">Support agent is typing</span>
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <!-- Guest Name Input (if not logged in) -->
+    <div id="chat-guest-info-bar" class="hidden px-3 py-2 bg-slate-900 border-t border-slate-800 flex items-center gap-2">
+      <input type="text" id="chat-guest-name-input" placeholder="Your Name or FF IGN (optional)" class="flex-1 bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-xs text-white" />
+      <button onclick="saveGuestName()" class="btn-ff-primary px-3 py-1 text-[11px]">Save</button>
+    </div>
+
+    <!-- Screenshot Attachment Preview -->
+    <div id="chat-attachment-preview" class="hidden px-3 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 overflow-hidden">
+        <img id="chat-preview-img" src="" alt="Screenshot" class="w-10 h-10 rounded object-cover border border-slate-700" />
+        <span id="chat-preview-filename" class="text-xs text-gray-300 truncate font-mono">screenshot.png</span>
+      </div>
+      <button type="button" onclick="clearChatAttachment()" class="text-red-400 hover:text-red-300 p-1 text-xs" title="Remove Attachment">
+        <i class="fas fa-times-circle text-base"></i>
+      </button>
+    </div>
+
+    <!-- Chat Footer & Input Form -->
+    <form id="chat-input-form" onsubmit="handleSendChatMessage(event)" class="p-3 bg-[#0d121b] border-t border-slate-800 flex items-center gap-2">
+      <input type="file" id="chat-screenshot-input" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="handleChatScreenshotSelected(event)" />
+      <button type="button" onclick="document.getElementById('chat-screenshot-input').click()" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-gray-300 hover:text-orange-400 flex items-center justify-center border border-slate-700 transition" title="Attach Screenshot (Proof of payment, bug, score)">
+        <i class="fas fa-paperclip text-sm"></i>
+      </button>
+      <input
+        type="text"
+        id="chat-message-input"
+        autocomplete="off"
+        placeholder="Type a message or attach screenshot..."
+        class="flex-1 bg-slate-900 border border-slate-700 focus:border-orange-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition"
+      />
+      <button type="submit" id="btn-chat-send" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-yellow-500 hover:from-orange-500 hover:to-yellow-400 text-black flex items-center justify-center font-bold shadow-md shadow-orange-500/30 transition transform active:scale-95">
+        <i class="fas fa-paper-plane text-sm"></i>
+      </button>
+    </form>
+  </div>
+
+  <!-- Client-side Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/api.js?v=2.3"></script>
+  <script src="/js/wallet.js?v=2.3"></script>
+  <script src="/js/chat.js?v=2.3"></script>
+  <script src="/js/app.js?v=2.3"></script>
+</body>
+</html>

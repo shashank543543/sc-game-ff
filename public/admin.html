@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SC GAMEING - Admin Control Console</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/custom.css" />
+</head>
+<body class="bg-[#090C10] text-gray-100 min-h-screen">
+
+  <div id="toast-container"></div>
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 1: ADMIN LOGIN SCREEN (IF NOT AUTHENTICATED AS ADMIN) -->
+  <!-- ============================================================ -->
+  <div id="admin-login-screen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="ff-card max-w-md w-full p-8 border-orange-500/50 shadow-2xl shadow-orange-500/10">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-600 to-yellow-500 mx-auto flex items-center justify-center text-3xl text-black font-black font-heading mb-3 shadow-lg shadow-orange-500/20">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <h1 class="text-2xl font-black text-white font-heading">SC GAMEING ADMIN</h1>
+        <p class="text-xs text-gray-400 mt-1">Authorized esports staff & tournament managers only</p>
+      </div>
+
+      <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Admin Email or Mobile</label>
+          <input type="text" id="admin-email-input" required placeholder="Enter admin email or mobile" autocomplete="username" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-xs font-semibold text-gray-300">Admin Password</label>
+            <a href="javascript:void(0)" onclick="openAdminForgotModal()" class="text-[11px] text-orange-400 hover:underline">Forgot Password?</a>
+          </div>
+          <input type="password" id="admin-pass-input" required placeholder="Enter admin password" autocomplete="current-password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <button type="submit" id="btn-admin-login" class="btn-ff-primary w-full mt-2">
+          Access Console <i class="fas fa-arrow-right"></i>
+        </button>
+
+        <div class="pt-4 text-center">
+          <a href="/" class="text-xs text-gray-400 hover:text-orange-400 transition">
+            <i class="fas fa-arrow-left"></i> Return to Player Arena
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 2: ADMIN WORKSTATION DASHBOARD -->
+  <!-- ============================================================ -->
+  <div id="admin-dashboard-screen" class="hidden min-h-screen flex flex-col">
+    
+    <!-- Top Admin Bar -->
+    <header class="bg-[#0e131b] border-b border-slate-800 h-16 px-6 flex items-center justify-between sticky top-0 z-40">
+      <div class="flex items-center gap-3">
+        <a href="/" class="flex items-center gap-2">
+          <img src="/assets/images/logo.svg" alt="SC GAMEING Logo" class="h-8 w-auto" />
+        </a>
+        <span class="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase bg-orange-600 text-white font-heading">
+          Console
+        </span>
+      </div>
+
+      <div class="flex items-center gap-4 text-xs">
+        <div class="flex items-center gap-2 text-gray-300 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg">
+          <i class="fas fa-user-shield text-yellow-400"></i>
+          <span id="admin-user-name" class="font-bold">Admin</span>
+        </div>
+        <a href="/" class="text-gray-400 hover:text-white transition flex items-center gap-1">
+          <i class="fas fa-globe"></i> View Site
+        </a>
+        <button onclick="api.logout()" class="text-red-400 hover:text-red-300 font-bold transition">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- Admin Main Body with Sub Navigation -->
+    <div class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+      
+      <!-- Admin Tab Navigation -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-800 text-xs font-heading">
+        <button data-tab="overview" class="admin-tab-btn active px-4 py-2.5 rounded-lg font-bold bg-orange-600 text-white flex items-center gap-2">
+          <i class="fas fa-chart-line"></i> Overview
+        </button>
+        <button data-tab="tournaments" class="admin-tab-btn px-4 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white bg-slate-800/40 flex items-center gap-2">
+          <i class="fas fa-gamepad"></i> Tournaments
+        </button>
+        <button data-tab="deposits" class="admin-tab-btn px-4 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white bg-slate-800/40 flex items-center gap-2">
+          <i class="fas fa-qrcode text-green-400"></i> UPI Wallet Management
+          <span id="badge-pending-deposits" class="px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] hidden font-mono">0</span>
+        </button>
+        <button data-tab="withdrawals" class="admin-tab-btn px-4 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white bg-slate-800/40 flex items-center gap-2">
+          <i class="fas fa-arrow-up text-amber-400"></i> Withdrawals
+          <span id="badge-pending-withdrawals" class="px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] hidden font-mono">0</span>
+        </button>
+        <button data-tab="gateway" class="admin-tab-btn px-4 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white bg-slate-800/40 flex items-center gap-2">
+          <i class="fas fa-sliders-h text-emerald-400"></i> Payment Controls
+        </button>
+        <button data-tab="users" class="admin-tab-btn px-4 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white bg-slate-800/40 flex items-center gap-2">
+          <i class="fas fa-users"></i> Users & Wallets
+        </button>
+        <button data-tab="products" class="admin-tab-btn px-4 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white bg-slate-800/40 flex items-center gap-2">
+          <i class="fas fa-boxes text-blue-400"></i> Products & Stock
+        </button>
+        <button data-tab="orders" class="admin-tab-btn px-4 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white bg-slate-800/40 flex items-center gap-2">
+          <i class="fas fa-shopping-bag text-purple-400"></i> Orders
+        </button>
+        <button data-tab="announcements" class="admin-tab-btn px-4 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white bg-slate-800/40 flex items-center gap-2">
+          <i class="fas fa-bullhorn"></i> Notices
+        </button>
+        <button data-tab="support" class="admin-tab-btn px-4 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white bg-slate-800/40 flex items-center gap-2">
+          <i class="fas fa-headset text-orange-400"></i> Live Support
+          <span id="badge-open-support" class="px-1.5 py-0.2 rounded-full bg-orange-600 text-white text-[10px] hidden font-mono">0</span>
+        </button>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 1: OVERVIEW & LIVE METRICS -->
+      <!-- ============================================================ -->
+      <div id="tab-content-overview" class="admin-tab-content space-y-6">
+        
+        <!-- Live KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="ff-card p-5">
+            <div class="text-xs text-gray-400 uppercase font-semibold">Registered Players</div>
+            <div id="stat-total-users" class="text-3xl font-black text-white font-heading mt-1">0</div>
+          </div>
+          <div class="ff-card p-5">
+            <div class="text-xs text-gray-400 uppercase font-semibold">Active Tournaments</div>
+            <div id="stat-active-tournaments" class="text-3xl font-black text-orange-400 font-heading mt-1">0</div>
+          </div>
+          <div class="ff-card p-5">
+            <div class="text-xs text-gray-400 uppercase font-semibold">Total Wallet Float</div>
+            <div id="stat-wallet-float" class="text-3xl font-black text-cyan-400 font-heading mt-1">₹0.00</div>
+          </div>
+          <div class="ff-card p-5">
+            <div class="text-xs text-gray-400 uppercase font-semibold">Total Deposits Approved</div>
+            <div id="stat-total-deposits" class="text-3xl font-black text-green-400 font-heading mt-1">₹0.00</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="ff-card p-5 border-emerald-500/30">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-bold text-white font-heading">Automated Deposits</h3>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400">Razorpay</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Real-time payments processed automatically via Razorpay checkout.</p>
+            <button onclick="switchAdminTab('deposits')" class="btn-ff-outline text-xs w-full">
+              View Payment Transactions
+            </button>
+          </div>
+
+          <div class="ff-card p-5 border-red-500/30">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-bold text-white font-heading">Pending Withdrawals</h3>
+              <span id="stat-pending-withdrawals" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-400">0</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Player requests to withdraw tournament winnings to their personal UPI ID.</p>
+            <button onclick="switchAdminTab('withdrawals')" class="btn-ff-outline text-xs w-full">
+              Review Withdrawal Queue
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 2: TOURNAMENTS MANAGER -->
+      <!-- ============================================================ -->
+      <div id="tab-content-tournaments" class="admin-tab-content hidden space-y-4">
+        
+        <div class="flex justify-between items-center flex-wrap gap-4">
+          <h2 class="text-xl font-black text-white font-heading">Manage Tournaments</h2>
+          <button onclick="openCreateTournamentModal()" class="btn-ff-primary text-xs">
+            <i class="fas fa-plus"></i> Create New Tournament
+          </button>
+        </div>
+
+        <div class="ff-card overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-900 border-b border-slate-800 text-xs uppercase text-gray-400 font-heading">
+              <tr>
+                <th class="py-3 px-4">Title</th>
+                <th class="py-3 px-4">Map & Type</th>
+                <th class="py-3 px-4">Fee</th>
+                <th class="py-3 px-4">Prize Pool</th>
+                <th class="py-3 px-4">Slots</th>
+                <th class="py-3 px-4">Schedule</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-tournaments-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 3: UPI WALLET MANAGEMENT & DEPOSITS                     -->
+      <!-- ============================================================ -->
+      <div id="tab-content-deposits" class="admin-tab-content hidden space-y-4">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 class="text-xl font-black text-white font-heading">UPI Wallet Management & Deposits</h2>
+            <p class="text-xs text-gray-400">Manage user wallet deposit requests, verify 12-digit bank UTR numbers, and review audit trail.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="toggleAuditLogs()" class="btn-ff-outline text-xs">
+              <i class="fas fa-history text-cyan-400"></i> Audit Trail
+            </button>
+            <button onclick="loadAdminDeposits()" class="btn-ff-outline text-xs">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="ff-card p-4">
+            <div class="text-[11px] text-gray-400 uppercase font-semibold">Active Merchant UPI ID</div>
+            <div class="text-lg font-black text-cyan-400 font-mono mt-1 flex items-center gap-2">
+              <i class="fas fa-at text-gray-500"></i> 6363440966@apl
+            </div>
+          </div>
+          <div class="ff-card p-4">
+            <div class="text-[11px] text-gray-400 uppercase font-semibold">Pending / Submitted Requests</div>
+            <div id="admin-upi-pending-count" class="text-2xl font-black text-yellow-400 font-heading mt-1">0</div>
+          </div>
+          <div class="ff-card p-4">
+            <div class="text-[11px] text-gray-400 uppercase font-semibold">Total Verified Deposits</div>
+            <div id="admin-upi-verified-total" class="text-2xl font-black text-green-400 font-heading mt-1">₹0.00</div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Controls -->
+        <div class="ff-card p-3 flex flex-col md:flex-row gap-3 items-center justify-between">
+          <!-- Status Filter Tabs -->
+          <div class="flex flex-wrap gap-1.5" id="upi-filter-buttons">
+            <button onclick="filterAdminDeposits('ALL')" class="upi-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-500 text-black">All</button>
+            <button onclick="filterAdminDeposits('SUBMITTED')" class="upi-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-gray-300 hover:text-white">Submitted (UTR Review)</button>
+            <button onclick="filterAdminDeposits('PENDING')" class="upi-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-gray-300 hover:text-white">Pending</button>
+            <button onclick="filterAdminDeposits('VERIFIED')" class="upi-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-gray-300 hover:text-white">Verified</button>
+            <button onclick="filterAdminDeposits('REJECTED')" class="upi-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-gray-300 hover:text-white">Rejected</button>
+          </div>
+
+          <!-- Search Input -->
+          <div class="w-full md:w-80 relative">
+            <input type="text" id="admin-deposit-search-input" oninput="debounceAdminDepositSearch()" placeholder="Search by Email, Order ID, UTR..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white focus:border-orange-500 focus:outline-none" />
+            <i class="fas fa-search absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
+          </div>
+        </div>
+
+        <!-- Deposits Table -->
+        <div class="ff-card overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-900 border-b border-slate-800 text-xs uppercase text-gray-400 font-heading">
+              <tr>
+                <th class="py-3 px-4">Order ID</th>
+                <th class="py-3 px-4">Player & Balance</th>
+                <th class="py-3 px-4">Amount</th>
+                <th class="py-3 px-4">UTR / Bank Ref</th>
+                <th class="py-3 px-4">Date & Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-deposits-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Audit Trail Drawer/Section (Hidden by default) -->
+        <div id="admin-audit-logs-section" class="hidden ff-card p-4 space-y-3 border-cyan-500/30">
+          <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+            <h3 class="font-bold text-white text-sm flex items-center gap-2">
+              <i class="fas fa-shield-alt text-cyan-400"></i> Admin Audit Log Trail (Immutable Verification Record)
+            </h3>
+            <button onclick="toggleAuditLogs()" class="text-xs text-gray-400 hover:text-white"><i class="fas fa-times"></i> Close</button>
+          </div>
+          <div id="admin-audit-logs-list" class="space-y-2 max-h-64 overflow-y-auto text-xs">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB: PAYMENT GATEWAY CONTROLS -->
+      <!-- ============================================================ -->
+      <div id="tab-content-gateway" class="admin-tab-content hidden space-y-6">
+        
+        <div class="ff-card p-6">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
+            <div>
+              <h2 class="text-xl font-black text-white font-heading">Razorpay Gateway Configuration</h2>
+              <p class="text-xs text-gray-400">Control payment credentials, operating mode, and transaction limits.</p>
+            </div>
+            <span id="gateway-status-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase bg-green-500/20 text-green-400 border border-green-500/40">
+              ACTIVE
+            </span>
+          </div>
+
+          <form onsubmit="savePaymentSettings(event)" class="space-y-5 max-w-2xl">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-semibold text-gray-300 block mb-1">Gateway Status</label>
+                <select id="gw-status-input" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-heading">
+                  <option value="ACTIVE">ACTIVE (Accepting Payments)</option>
+                  <option value="MAINTENANCE">MAINTENANCE (Temporarily Disabled)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-gray-300 block mb-1">Gateway Mode</label>
+                <select id="gw-mode-input" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-heading">
+                  <option value="TEST">TEST / SANDBOX</option>
+                  <option value="LIVE">LIVE / PRODUCTION</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold text-gray-300 block mb-1">Razorpay Key ID *</label>
+              <input type="text" id="gw-key-id-input" placeholder="rzp_test_..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono" />
+              <p class="text-[11px] text-gray-500 mt-1">Found in your Razorpay Dashboard &gt; Settings &gt; API Keys.</p>
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold text-gray-300 block mb-1">Razorpay Key Secret *</label>
+              <input type="password" id="gw-key-secret-input" placeholder="Enter key secret" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono" />
+              <p class="text-[11px] text-gray-500 mt-1">Kept strictly encrypted and never shared with users.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-800">
+              <div>
+                <label class="text-xs font-semibold text-gray-300 block mb-1">Minimum Deposit (₹)</label>
+                <input type="number" id="gw-min-dep-input" min="1" value="10" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-gray-300 block mb-1">Maximum Deposit (₹)</label>
+                <input type="number" id="gw-max-dep-input" min="100" value="50000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-semibold text-gray-300 block mb-1">Minimum Withdrawal (₹)</label>
+                <input type="number" id="gw-min-wth-input" min="10" value="50" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-gray-300 block mb-1">Maximum Withdrawal (₹)</label>
+                <input type="number" id="gw-max-wth-input" min="100" value="10000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+              </div>
+            </div>
+
+            <div class="pt-3">
+              <button type="submit" id="btn-save-gateway" class="btn-ff-primary">
+                <i class="fas fa-save"></i> Save Payment Settings
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 4: WITHDRAWALS APPROVALS -->
+      <!-- ============================================================ -->
+      <div id="tab-content-withdrawals" class="admin-tab-content hidden space-y-4">
+        
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-black text-white font-heading">Player Cash Withdrawals</h2>
+          <button onclick="loadAdminWithdrawals()" class="btn-ff-outline text-xs">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+        </div>
+
+        <div class="ff-card overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-900 border-b border-slate-800 text-xs uppercase text-gray-400 font-heading">
+              <tr>
+                <th class="py-3 px-4">Player</th>
+                <th class="py-3 px-4">Amount</th>
+                <th class="py-3 px-4">UPI ID</th>
+                <th class="py-3 px-4">Account Holder</th>
+                <th class="py-3 px-4">Time</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-withdrawals-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 5: USER MANAGEMENT & WALLET ADJUSTMENTS -->
+      <!-- ============================================================ -->
+      <div id="tab-content-users" class="admin-tab-content hidden space-y-4">
+        
+        <div class="flex justify-between items-center flex-wrap gap-4">
+          <h2 class="text-xl font-black text-white font-heading">User Management</h2>
+          
+          <div class="flex items-center gap-2">
+            <input type="text" id="admin-user-search-input" placeholder="Search by name, email, phone, UID..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white w-64" onkeyup="if(event.key === 'Enter') loadAdminUsers();" />
+            <button onclick="loadAdminUsers()" class="btn-ff-outline text-xs">Search</button>
+          </div>
+        </div>
+
+        <div class="ff-card overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-900 border-b border-slate-800 text-xs uppercase text-gray-400 font-heading">
+              <tr>
+                <th class="py-3 px-4">User Details</th>
+                <th class="py-3 px-4">Free Fire IGN & UID</th>
+                <th class="py-3 px-4">Wallet Balance</th>
+                <th class="py-3 px-4">Password / Security</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Joined</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 6: ANNOUNCEMENTS -->
+      <!-- ============================================================ -->
+      <div id="tab-content-announcements" class="admin-tab-content hidden space-y-6">
+        
+        <div class="ff-card p-6">
+          <h3 class="text-base font-bold text-white font-heading mb-3">Publish New Announcement</h3>
+          <form onsubmit="submitCreateAnnouncement(event)" class="space-y-3">
+            <div>
+              <label class="text-xs text-gray-300 block mb-1">Title</label>
+              <input type="text" id="ann-title-input" required placeholder="e.g. Sunday Mega Tournament Announced!" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-300 block mb-1">Message Content</label>
+              <textarea id="ann-message-input" required rows="2" placeholder="Announcement details shown on ticker and alerts..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"></textarea>
+            </div>
+            <button type="submit" class="btn-ff-primary text-xs">
+              <i class="fas fa-bullhorn"></i> Publish Announcement
+            </button>
+          </form>
+        </div>
+
+        <div class="ff-card p-6">
+          <h3 class="text-base font-bold text-white font-heading mb-3">Active Announcements</h3>
+          <div id="admin-announcements-list"></div>
+        </div>
+
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 7: PRODUCTS & STOCK INVENTORY -->
+      <!-- ============================================================ -->
+      <div id="tab-content-products" class="admin-tab-content hidden space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-white font-heading">Products & Inventory Management</h2>
+            <p class="text-xs text-gray-400">Control store items, stock quantities, pricing, and category assignments.</p>
+          </div>
+          <button onclick="openCreateProductModal()" class="btn-ff-primary text-xs flex items-center gap-2">
+            <i class="fas fa-plus"></i> Add New Product
+          </button>
+        </div>
+
+        <div class="ff-card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-900/80 text-gray-400 uppercase font-heading border-b border-slate-800">
+                <tr>
+                  <th class="py-3 px-4">Product Details</th>
+                  <th class="py-3 px-4">Category</th>
+                  <th class="py-3 px-4">Price (₹)</th>
+                  <th class="py-3 px-4">Available Stock</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-products-table-body">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 8: CUSTOMER ORDERS -->
+      <!-- ============================================================ -->
+      <div id="tab-content-orders" class="admin-tab-content hidden space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-white font-heading">Orders & Fulfillment</h2>
+            <p class="text-xs text-gray-400">View player orders and manage shipping/fulfillment states.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="orders-filter-status" onchange="filterAdminOrders()" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
+              <option value="ALL">All Order Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button onclick="loadAdminOrders()" class="btn-ff-outline text-xs px-3 py-1.5">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+        </div>
+
+        <div class="ff-card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-900/80 text-gray-400 uppercase font-heading border-b border-slate-800">
+                <tr>
+                  <th class="py-3 px-4">Order #</th>
+                  <th class="py-3 px-4">Customer</th>
+                  <th class="py-3 px-4">Total Amount</th>
+                  <th class="py-3 px-4">Payment</th>
+                  <th class="py-3 px-4">Fulfillment</th>
+                  <th class="py-3 px-4">Date</th>
+                  <th class="py-3 px-4 text-right">Status Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-orders-table-body">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 9: LIVE CUSTOMER SERVICE WORKSTATION                    -->
+      <!-- ============================================================ -->
+      <div id="tab-content-support" class="admin-tab-content hidden space-y-4">
+        <!-- Top Title & Quick Filters -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-white font-heading flex items-center gap-2">
+              <i class="fas fa-headset text-orange-500"></i> Customer Service Live Desk
+              <span id="admin-support-live-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/20 text-green-400 border border-green-500/30">ONLINE</span>
+            </h2>
+            <p class="text-xs text-gray-400">Respond in real time to players, verify payment queries, and provide instant room & withdrawal support.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="loadAdminSupportChats()" class="btn-ff-outline text-xs px-3 py-1.5 flex items-center gap-1.5">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Support Workstation Layout (Split View: Chat List + Chat Transcript) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[720px] max-h-[calc(100vh-220px)]">
+          
+          <!-- LEFT COLUMN: Conversation Threads List (5 cols) -->
+          <div class="lg:col-span-5 ff-card p-0 flex flex-col overflow-hidden border-slate-800">
+            <!-- Filter & Search Bar -->
+            <div class="p-3 bg-slate-900/90 border-b border-slate-800 space-y-2.5">
+              <div class="relative">
+                <i class="fas fa-search absolute left-3 top-2.5 text-xs text-gray-400"></i>
+                <input
+                  type="text"
+                  id="admin-support-search"
+                  oninput="debounceAdminSupportSearch()"
+                  placeholder="Search player, IGN, mobile, or message..."
+                  class="w-full bg-slate-800/90 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                />
+              </div>
+              <div class="flex items-center gap-1 text-[11px] font-heading">
+                <button onclick="filterAdminSupportStatus('ALL')" class="admin-support-filter active px-2.5 py-1 rounded bg-orange-600 text-white font-bold" data-status="ALL">
+                  All
+                </button>
+                <button onclick="filterAdminSupportStatus('OPEN')" class="admin-support-filter px-2.5 py-1 rounded bg-slate-800 text-gray-400 hover:text-white font-bold" data-status="OPEN">
+                  Open <span id="admin-support-open-count" class="ml-1 text-[10px] px-1 bg-red-600 text-white rounded-full">0</span>
+                </button>
+                <button onclick="filterAdminSupportStatus('RESOLVED')" class="admin-support-filter px-2.5 py-1 rounded bg-slate-800 text-gray-400 hover:text-white font-bold" data-status="RESOLVED">
+                  Resolved
+                </button>
+              </div>
+            </div>
+
+            <!-- Conversations List Scroll Area -->
+            <div id="admin-support-conversations-list" class="flex-1 overflow-y-auto divide-y divide-slate-800/60">
+              <!-- Rendered dynamically -->
+              <div class="p-8 text-center text-gray-500 text-xs">
+                <i class="fas fa-spinner fa-spin text-orange-500 text-lg mb-2"></i>
+                <p>Loading customer conversations...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: Active Chat Thread & Action Console (7 cols) -->
+          <div class="lg:col-span-7 ff-card p-0 flex flex-col overflow-hidden border-slate-800">
+            <!-- Empty Placeholder (When no chat selected) -->
+            <div id="admin-support-empty-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-400">
+              <div class="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-2xl text-orange-400 mb-3">
+                <i class="fas fa-comments"></i>
+              </div>
+              <h3 class="text-base font-bold text-white font-heading">Select a Player Conversation</h3>
+              <p class="text-xs text-gray-500 mt-1 max-w-sm">Choose any incoming inquiry from the left panel to review player match details, answer questions, or resolve tickets.</p>
+            </div>
+
+            <!-- Active Thread Container (Hidden until chat selected) -->
+            <div id="admin-support-active-chat" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+              <!-- Thread Header: Player Info & Status Controls -->
+              <div class="p-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-yellow-500 flex items-center justify-center text-black font-black text-sm">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h4 id="admin-chat-player-name" class="font-bold text-white text-sm">Player</h4>
+                      <span id="admin-chat-player-role" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-orange-600/30 text-orange-400 border border-orange-500/40">USER</span>
+                      <span id="admin-chat-status-pill" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-green-500/20 text-green-400 border border-green-500/30 font-mono">OPEN</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-[11px] text-gray-400 mt-0.5">
+                      <span id="admin-chat-player-ign" class="text-yellow-400 font-mono">IGN: -</span>
+                      <span id="admin-chat-player-mobile" class="text-gray-300 font-mono">📱 -</span>
+                      <span id="admin-chat-player-balance" class="text-green-400 font-mono font-bold">₹0.00</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Status Action Toggle -->
+                <div class="flex items-center gap-2">
+                  <button id="btn-toggle-ticket-status" onclick="toggleAdminConversationStatus()" class="btn-ff-outline text-xs px-3 py-1.5">
+                    <i class="fas fa-check-circle text-green-400"></i> Mark Resolved
+                  </button>
+                </div>
+              </div>
+
+              <!-- Message History Transcript -->
+              <div id="admin-support-chat-transcript" class="flex-1 p-4 overflow-y-auto space-y-3 bg-[#0a0d14] flex flex-col">
+                <!-- Messages populated dynamically -->
+              </div>
+
+              <!-- Typing Indicator -->
+              <div id="admin-chat-typing-indicator" class="hidden px-4 py-1 bg-slate-900/60 text-xs text-orange-400 flex items-center gap-2">
+                <span>Player is typing</span>
+                <div class="typing-dots"><span></span><span></span><span></span></div>
+              </div>
+
+              <!-- Quick Canned Responses Bar -->
+              <div class="px-3 py-2 bg-slate-900 border-t border-slate-800 flex gap-1.5 overflow-x-auto no-scrollbar">
+                <button onclick="insertCannedResponse('Hi! We have verified your UTR reference and credited the amount to your wallet.')" class="px-2 py-0.5 rounded text-[11px] bg-slate-800 hover:bg-orange-600 text-gray-300 hover:text-white whitespace-nowrap transition border border-slate-700">
+                  💳 UTR Approved
+                </button>
+                <button onclick="insertCannedResponse('Custom Room ID & Password are published in the \'My Matches\' tab 15 minutes before match start!')" class="px-2 py-0.5 rounded text-[11px] bg-slate-800 hover:bg-orange-600 text-gray-300 hover:text-white whitespace-nowrap transition border border-slate-700">
+                  🎮 Room Timing
+                </button>
+                <button onclick="insertCannedResponse('Your withdrawal request has been verified and processed via UPI. Please check your bank app!')" class="px-2 py-0.5 rounded text-[11px] bg-slate-800 hover:bg-orange-600 text-gray-300 hover:text-white whitespace-nowrap transition border border-slate-700">
+                  💸 Payout Sent
+                </button>
+                <button onclick="insertCannedResponse('Could you please share your 12-digit UTR number or a screenshot of your payment?')" class="px-2 py-0.5 rounded text-[11px] bg-slate-800 hover:bg-orange-600 text-gray-300 hover:text-white whitespace-nowrap transition border border-slate-700">
+                  📸 Request Screenshot
+                </button>
+                <button onclick="insertCannedResponse('Glad we could resolve this for you! Good luck with your match and Booyah! 🔥')" class="px-2 py-0.5 rounded text-[11px] bg-slate-800 hover:bg-orange-600 text-gray-300 hover:text-white whitespace-nowrap transition border border-slate-700">
+                  ✅ Issue Resolved
+                </button>
+              </div>
+
+              <!-- Admin Screenshot Attachment Preview -->
+              <div id="admin-attachment-preview" class="hidden px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 overflow-hidden">
+                  <img id="admin-preview-img" src="" alt="Screenshot" class="w-8 h-8 rounded object-cover border border-slate-700" />
+                  <span id="admin-preview-filename" class="text-xs text-gray-300 truncate font-mono">screenshot.png</span>
+                </div>
+                <button type="button" onclick="clearAdminChatAttachment()" class="text-red-400 hover:text-red-300 p-1 text-xs" title="Remove Attachment">
+                  <i class="fas fa-times-circle"></i>
+                </button>
+              </div>
+
+              <!-- Admin Reply Form -->
+              <form id="admin-support-reply-form" onsubmit="handleAdminSendSupportReply(event)" class="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center gap-2">
+                <input type="file" id="admin-chat-screenshot-input" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="handleAdminScreenshotSelected(event)" />
+                <button type="button" onclick="document.getElementById('admin-chat-screenshot-input').click()" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-gray-300 hover:text-orange-400 flex items-center justify-center border border-slate-700 transition" title="Attach Screenshot (Proof of payment, receipt)">
+                  <i class="fas fa-paperclip text-sm"></i>
+                </button>
+                <input
+                  type="text"
+                  id="admin-support-reply-input"
+                  autocomplete="off"
+                  placeholder="Type an official support reply... (Press Enter to send)"
+                  class="flex-1 bg-slate-800 border border-slate-700 focus:border-orange-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition"
+                />
+                <button type="submit" id="btn-admin-reply-send" class="btn-ff-primary px-4 py-2.5 text-xs flex items-center gap-1.5 whitespace-nowrap">
+                  <i class="fas fa-paper-plane"></i> Send
+                </button>
+              </form>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: CREATE TOURNAMENT -->
+  <!-- ============================================================ -->
+  <div id="create-tournament-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-xl">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <h3 class="text-lg font-bold text-white font-heading">Create Free Fire Tournament</h3>
+        <button onclick="closeCreateTournamentModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <form onsubmit="submitCreateTournament(event)" class="py-4 space-y-3">
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Tournament Title *</label>
+          <input type="text" id="new-tourn-title" required placeholder="e.g. Bermuda Solo Clash #105" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Match Type *</label>
+            <select id="new-tourn-type" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white font-heading">
+              <option value="SOLO">SOLO</option>
+              <option value="DUO">DUO</option>
+              <option value="SQUAD">SQUAD</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Map *</label>
+            <select id="new-tourn-map" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white font-heading">
+              <option value="Bermuda">Bermuda</option>
+              <option value="Purgatory">Purgatory</option>
+              <option value="Kalahari">Kalahari</option>
+              <option value="Alpine">Alpine</option>
+              <option value="Nexterra">Nexterra</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Entry Fee (₹) *</label>
+            <input type="number" id="new-tourn-fee" required min="0" value="20" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Total Prize Pool (₹) *</label>
+            <input type="number" id="new-tourn-prize-pool" required min="0" value="800" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Per Kill Prize (₹)</label>
+            <input type="number" id="new-tourn-per-kill" min="0" value="10" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">1st Prize (Booyah)</label>
+            <input type="number" id="new-tourn-prize-1" min="0" value="350" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">2nd Prize</label>
+            <input type="number" id="new-tourn-prize-2" min="0" value="200" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">3rd Prize</label>
+            <input type="number" id="new-tourn-prize-3" min="0" value="100" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Max Slots *</label>
+            <input type="number" id="new-tourn-slots" required min="2" max="100" value="48" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Match Schedule Time *</label>
+            <input type="datetime-local" id="new-tourn-time" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Rules & Guidelines</label>
+          <textarea id="new-tourn-rules" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white">1. Mobile players only (No Emulators/PC).
+2. Gun properties OFF.
+3. Room ID & Password released 15 minutes prior to match.
+4. Winner takes screenshot of Booyah with kill stats.</textarea>
+        </div>
+
+        <button type="submit" class="btn-ff-primary w-full mt-2">
+          Create & Publish Tournament
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: SET ROOM ID & PASSWORD -->
+  <!-- ============================================================ -->
+  <div id="set-room-modal" class="modal-backdrop">
+    <div class="modal-content p-6">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-lg font-bold text-white font-heading">Set Custom Room Details</h3>
+          <span id="set-room-tourn-title" class="text-xs text-orange-400"></span>
+        </div>
+        <button onclick="closeSetRoomModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <form onsubmit="submitSetRoomCredentials(event)" class="py-4 space-y-4">
+        <input type="hidden" id="set-room-tourn-id" />
+        
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Free Fire Room ID *</label>
+          <input type="text" id="set-room-id-input" required placeholder="e.g. 98451203" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono" />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Free Fire Room Password *</label>
+          <input type="text" id="set-room-pass-input" required placeholder="e.g. SCG@2026" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono" />
+        </div>
+
+        <div class="text-[11px] text-gray-400 bg-slate-900/60 p-2.5 rounded border border-slate-800">
+          <i class="fas fa-lock-open text-green-400"></i> Once saved, these credentials will be revealed IMMEDIATELY and EXCLUSIVELY to players who registered for this match.
+        </div>
+
+        <button type="submit" class="btn-ff-success w-full">
+          <i class="fas fa-paper-plane"></i> Publish Room Credentials
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: EDIT TOURNAMENT SCHEDULE TIME -->
+  <!-- ============================================================ -->
+  <div id="edit-time-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-md">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-lg font-bold text-white font-heading"><i class="fas fa-clock text-purple-400"></i> Edit Match Schedule Time</h3>
+          <span id="edit-time-tourn-title" class="text-xs text-orange-400"></span>
+        </div>
+        <button onclick="closeEditTimeModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <form onsubmit="submitEditTournamentTime(event)" class="py-4 space-y-4">
+        <input type="hidden" id="edit-time-tourn-id" />
+        
+        <div>
+          <label class="text-xs font-semibold text-gray-400 block mb-1">Current Scheduled Time</label>
+          <div id="edit-time-current-display" class="font-mono text-xs text-gray-300 bg-slate-900 px-3 py-2 rounded border border-slate-800"></div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">New Match Date & Time *</label>
+          <input type="datetime-local" id="edit-time-input" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 focus:outline-none" />
+        </div>
+
+        <div class="flex items-center gap-2 bg-slate-900/60 p-2.5 rounded border border-slate-800">
+          <input type="checkbox" id="edit-time-notify-checkbox" checked class="w-4 h-4 rounded text-purple-600 focus:ring-0 bg-slate-800 border-slate-700" />
+          <label for="edit-time-notify-checkbox" class="text-xs text-gray-300 cursor-pointer">
+            <i class="fas fa-bell text-yellow-400"></i> Push notification to all joined players
+          </label>
+        </div>
+
+        <div class="flex gap-2">
+          <button type="button" onclick="closeEditTimeModal()" class="btn-ff-outline flex-1 py-2 text-xs">
+            Cancel
+          </button>
+          <button type="submit" id="btn-save-edit-time" class="btn-ff-primary flex-1 py-2 text-xs bg-purple-600 hover:bg-purple-500 border-purple-600">
+            <i class="fas fa-save"></i> Save & Reschedule
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: ENTER MATCH RESULTS & AUTO PAYOUT -->
+  <!-- ============================================================ -->
+  <div id="admin-results-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-xl">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-lg font-bold text-white font-heading">Submit Results & Auto-Payout</h3>
+          <span id="results-tourn-title" class="text-xs text-yellow-400"></span>
+        </div>
+        <button onclick="closeAdminResultsModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <div class="py-4 space-y-3">
+        <p class="text-xs text-gray-400">
+          Enter player ranks (Rank 1 = Booyah) and kill counts. The system will automatically calculate prizes and credit winnings directly to each player's wallet!
+        </p>
+
+        <div id="results-entry-list" class="space-y-2 max-h-80 overflow-y-auto">
+          <!-- Player result inputs injected dynamically -->
+        </div>
+
+        <button id="btn-submit-payouts" onclick="submitResultsAndPayouts()" class="btn-ff-primary w-full mt-3">
+          <i class="fas fa-coins"></i> Calculate & Distribute Cash Prizes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: MANUAL WALLET ADJUSTMENT -->
+  <!-- ============================================================ -->
+  <div id="adjust-wallet-modal" class="modal-backdrop">
+    <div class="modal-content p-6">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-lg font-bold text-white font-heading">Manual Wallet Adjustment</h3>
+          <span id="adjust-user-name" class="text-xs text-cyan-400 font-bold"></span>
+        </div>
+        <button onclick="closeAdjustWalletModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <form onsubmit="submitWalletAdjustment(event)" class="py-4 space-y-4">
+        <input type="hidden" id="adjust-user-id" />
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Adjustment Type *</label>
+          <select id="adjust-type" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+            <option value="CREDIT">CREDIT (+ Add to wallet)</option>
+            <option value="DEBIT">DEBIT (- Deduct from wallet)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Amount (₹) *</label>
+          <input type="number" id="adjust-amount" required min="1" step="0.01" placeholder="100" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Reason for Adjustment *</label>
+          <input type="text" id="adjust-reason" required placeholder="e.g. Special tournament bonus, manual UPI resolution" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+
+        <button type="submit" class="btn-ff-primary w-full">
+          Confirm Adjustment
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: ADMIN USER PASSWORD MANAGEMENT -->
+  <!-- ============================================================ -->
+  <div id="user-password-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-md">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-lg font-bold text-white font-heading flex items-center gap-2">
+            <i class="fas fa-key text-amber-400"></i> User Password Management
+          </h3>
+          <span id="user-password-target-name" class="text-xs text-orange-400 font-bold"></span>
+        </div>
+        <button onclick="closeUserPasswordModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <div class="py-4 space-y-4">
+        <input type="hidden" id="user-password-target-id" />
+
+        <!-- User Information Badge -->
+        <div class="p-3 bg-slate-900 border border-slate-800 rounded-lg text-xs space-y-1">
+          <div class="text-gray-400">Email: <span id="user-password-target-email" class="text-white font-semibold"></span></div>
+          <div class="text-gray-400">Bcrypt Hash: <span id="user-password-hash-display" class="text-amber-300 font-mono text-[10px] break-all"></span></div>
+        </div>
+
+        <!-- Set / Change Password Form -->
+        <form onsubmit="submitAdminUserPassword(event)" class="space-y-3">
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-semibold text-gray-300">New Password (min 6 characters) *</label>
+              <button type="button" onclick="generateRandomUserPassword()" class="text-[11px] text-amber-400 hover:underline flex items-center gap-1 font-bold">
+                <i class="fas fa-magic"></i> Auto-Generate
+              </button>
+            </div>
+            <div class="relative">
+              <input type="text" id="admin-user-new-password" required minlength="6" placeholder="Enter new password for player" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono" />
+              <button type="button" onclick="copyNewPasswordToClipboard()" class="absolute right-2 top-2 text-xs text-gray-400 hover:text-white px-2 py-0.5 rounded bg-slate-800">
+                <i class="fas fa-copy"></i> Copy
+              </button>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-1">This instantly updates the player's account password. You can give this password to the player.</p>
+          </div>
+
+          <button type="submit" id="btn-save-user-password" class="btn-ff-primary w-full">
+            <i class="fas fa-save"></i> Save & Update Password
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: FULL USER DETAILS & SECURITY -->
+  <!-- ============================================================ -->
+  <div id="user-details-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-lg">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-lg font-bold text-white font-heading flex items-center gap-2">
+            <i class="fas fa-id-card text-blue-400"></i> Full User Profile & Security
+          </h3>
+          <span id="detail-user-name-title" class="text-xs text-blue-400 font-bold"></span>
+        </div>
+        <button onclick="closeUserDetailsModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <div class="py-4 space-y-4">
+        <!-- Details Grid -->
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+            <span class="text-gray-400 block text-[11px]">User ID</span>
+            <span id="detail-user-id" class="text-white font-mono font-bold"></span>
+          </div>
+          <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+            <span class="text-gray-400 block text-[11px]">Full Name</span>
+            <span id="detail-user-name" class="text-white font-bold"></span>
+          </div>
+          <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+            <span class="text-gray-400 block text-[11px]">Email Address</span>
+            <span id="detail-user-email" class="text-orange-400 font-semibold break-all"></span>
+          </div>
+          <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+            <span class="text-gray-400 block text-[11px]">Mobile Number</span>
+            <span id="detail-user-mobile" class="text-white font-semibold"></span>
+          </div>
+          <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+            <span class="text-gray-400 block text-[11px]">Free Fire IGN</span>
+            <span id="detail-user-ign" class="text-amber-400 font-bold"></span>
+          </div>
+          <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+            <span class="text-gray-400 block text-[11px]">Free Fire UID</span>
+            <span id="detail-user-uid" class="text-white font-mono"></span>
+          </div>
+          <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+            <span class="text-gray-400 block text-[11px]">Wallet Balance</span>
+            <span id="detail-user-balance" class="text-green-400 font-bold text-sm"></span>
+          </div>
+          <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+            <span class="text-gray-400 block text-[11px]">Account Status</span>
+            <span id="detail-user-status" class="font-bold uppercase"></span>
+          </div>
+        </div>
+
+        <!-- Password Security Box -->
+        <div class="p-3 bg-slate-900/90 rounded-lg border border-slate-800 space-y-1.5 text-xs">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-white flex items-center gap-1.5">
+              <i class="fas fa-shield-alt text-amber-400"></i> Password Security Status
+            </span>
+            <span class="px-2 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400 font-bold">Encrypted (Bcrypt)</span>
+          </div>
+          <div class="text-[11px] text-gray-400">
+            Encrypted Hash: <span id="detail-user-hash" class="font-mono text-amber-300 text-[10px] break-all"></span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-2 pt-2">
+          <button id="btn-detail-manage-pass" onclick="" class="btn-ff-primary flex-1 text-xs">
+            <i class="fas fa-key"></i> Set / Change Password
+          </button>
+          <button id="btn-detail-manage-wallet" onclick="" class="btn-ff-outline flex-1 text-xs">
+            <i class="fas fa-coins"></i> Adjust Balance
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: CREATE PRODUCT -->
+  <!-- ============================================================ -->
+  <div id="create-product-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-lg">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <h3 class="text-lg font-bold text-white font-heading">Add Store Product</h3>
+        <button onclick="closeCreateProductModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <form onsubmit="submitCreateProduct(event)" class="py-4 space-y-3">
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Product Name *</label>
+          <input type="text" id="new-prod-name" required placeholder="e.g. Free Fire Diamond Voucher (520 Diamonds)" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Category *</label>
+            <select id="new-prod-category" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white">
+              <option value="cat-1">In-Game Items</option>
+              <option value="cat-2">Digital Diamonds</option>
+              <option value="cat-3">Official Merch</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">SKU Code</label>
+            <input type="text" id="new-prod-sku" placeholder="FF-PROD-001" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white uppercase" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Price (₹) *</label>
+            <input type="number" id="new-prod-price" required min="1" step="0.01" placeholder="399" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-300 block mb-1">Initial Stock Quantity *</label>
+            <input type="number" id="new-prod-stock" required min="0" value="50" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Description</label>
+          <textarea id="new-prod-desc" rows="2" placeholder="Instant voucher redemption or delivery info..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white"></textarea>
+        </div>
+
+        <button type="submit" id="btn-create-product" class="btn-ff-primary w-full mt-2">
+          Create Product
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: ADJUST PRODUCT STOCK -->
+  <!-- ============================================================ -->
+  <div id="adjust-stock-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-sm">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-white font-heading">Adjust Stock Inventory</h3>
+          <span id="adjust-stock-prod-name" class="text-xs text-orange-400"></span>
+        </div>
+        <button onclick="closeAdjustStockModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <form onsubmit="submitAdjustStock(event)" class="py-4 space-y-3">
+        <input type="hidden" id="adjust-stock-prod-id" />
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Action *</label>
+          <select id="adjust-stock-type" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white">
+            <option value="ADD">Add to existing stock (+)</option>
+            <option value="REMOVE">Remove from stock (-)</option>
+            <option value="SET">Set exact stock count (=)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Quantity *</label>
+          <input type="number" id="adjust-stock-qty" required min="0" placeholder="10" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-white" />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Reason / Note *</label>
+          <input type="text" id="adjust-stock-reason" required placeholder="e.g. Fresh stock replenishment" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white" />
+        </div>
+
+        <button type="submit" id="btn-adjust-stock" class="btn-ff-primary w-full mt-2">
+          Update Stock
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: ADMIN FORGOT / RESET PASSWORD -->
+  <!-- ============================================================ -->
+  <div id="admin-forgot-modal" class="modal-backdrop">
+    <div class="modal-content p-6 max-w-sm">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white font-heading">Reset Admin Password</h3>
+        <button onclick="closeAdminForgotModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Step 1: Request code -->
+      <form id="admin-forgot-step1" onsubmit="handleAdminForgotStep1(event)" class="py-4 space-y-3">
+        <p class="text-xs text-gray-400">Enter your registered admin email address to receive a secure 6-digit verification code.</p>
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">Admin Email</label>
+          <input type="email" id="admin-forgot-email" required placeholder="Admin Email" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+        <button type="submit" id="btn-admin-forgot1" class="btn-ff-primary w-full text-xs">
+          <i class="fas fa-paper-plane"></i> Send Reset Code
+        </button>
+      </form>
+
+      <!-- Step 2: Verify code & set new password -->
+      <form id="admin-forgot-step2" onsubmit="handleAdminForgotStep2(event)" class="py-4 space-y-3 hidden">
+        <div id="admin-code-hint" class="text-xs text-green-400 bg-green-500/10 p-2.5 rounded border border-green-500/30"></div>
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">6-Digit Reset Code</label>
+          <input type="text" id="admin-reset-code" required maxlength="6" placeholder="e.g. 123456" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono text-center tracking-widest text-lg font-bold" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-300 block mb-1">New Admin Password</label>
+          <input type="password" id="admin-reset-newpass" required minlength="6" placeholder="Enter new password (min 6 chars)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+        </div>
+        <button type="submit" id="btn-admin-forgot2" class="btn-ff-success w-full text-xs">
+          <i class="fas fa-check"></i> Save New Password & Log In
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/api.js?v=2.1"></script>
+  <script src="/js/admin.js?v=2.1"></script>
+</body>
+</html>

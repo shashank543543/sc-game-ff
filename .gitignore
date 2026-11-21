@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Local Environment Variables & Secrets
+.env
+.env.local
+.env.production
+
+# Database (Keep SQLite data local)
+data/*.sqlite*
+data/.test_otps.json
+
+# User Uploads
+public/uploads/support/*
+!public/uploads/support/.gitkeep
+public/uploads/*.jfif
+public/uploads/*.jpg
+public/uploads/*.png
+!public/uploads/.gitkeep
+
+# Logs & System Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+.vscode/

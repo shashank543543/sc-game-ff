@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="purgBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3A1C71"/>
+      <stop offset="50%" stop-color="#D76D77"/>
+      <stop offset="100%" stop-color="#FFAF7B"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="300" fill="url(#purgBg)"/>
+  <rect width="600" height="300" fill="rgba(10, 14, 22, 0.75)"/>
+  <circle cx="300" cy="150" r="120" fill="none" stroke="rgba(255, 81, 0, 0.25)" stroke-width="2"/>
+  <rect x="30" y="30" width="130" height="30" rx="6" fill="rgba(0,0,0,0.6)" stroke="#FFA200" stroke-width="1.5"/>
+  <text x="95" y="50" font-family="'Rajdhani', sans-serif" font-weight="700" font-size="14" fill="#FFA200" text-anchor="middle">PURGATORY</text>
+  <text x="300" y="165" font-family="'Rajdhani', sans-serif" font-weight="800" font-size="46" fill="#FFFFFF" text-anchor="middle" letter-spacing="4">PURGATORY SQUAD</text>
+  <text x="300" y="195" font-family="'Inter', sans-serif" font-weight="600" font-size="14" fill="#FFA200" text-anchor="middle" letter-spacing="2">BRASILIA • MARBLEWORKS • CENTRAL</text>
+</svg>
