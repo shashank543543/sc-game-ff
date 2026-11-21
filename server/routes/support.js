@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const path = require('path');
+const os = require('os');
 const fs = require('fs');
 const multer = require('multer');
 const db = require('../db');
@@ -9,9 +10,18 @@ const { optionalAuth, requireAdmin } = require('../middleware/auth');
 const supportBot = require('../services/supportBotService');
 
 // Multer Storage Configuration for Customer Support Screenshots
-const uploadDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'support');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+let uploadDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'support');
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (e) {
+  uploadDir = path.join(os.tmpdir(), 'support');
+  try {
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+  } catch (_) {}
 }
 
 const storage = multer.diskStorage({

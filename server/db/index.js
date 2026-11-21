@@ -12,9 +12,10 @@ function initDatabase() {
     try {
       if (config.db.url) {
         const { Pool } = require('pg');
+        const isSupabase = config.db.url.includes('supabase.co') || config.db.url.includes('supabase.com') || config.db.url.includes('pooler.supabase');
         const pool = new Pool({
           connectionString: config.db.url,
-          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+          ssl: (process.env.NODE_ENV === 'production' || isSupabase) ? { rejectUnauthorized: false } : false
         });
         dbDriver = pool;
         dbType = 'postgres';
