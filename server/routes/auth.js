@@ -74,7 +74,7 @@ router.post('/register', authLimiter, async (req, res) => {
     // Hash password with bcrypt
     const salt = bcrypt.genSaltSync(10);
     const passwordHash = bcrypt.hashSync(password, salt);
-    const userId = 'usr-' + Date.now() + '-' + crypto.randomBytes(3).toString('hex');
+    const userId = db.generateId('usr');
 
     // Welcome bonus: ₹10 instant wallet credit for new players
     const welcomeBonus = 10.00;
@@ -95,7 +95,7 @@ router.post('/register', authLimiter, async (req, res) => {
     );
 
     // Create user_profiles entry
-    const profileId = 'prof-' + userId;
+    const profileId = db.generateId('prof');
     await db.run(
       `INSERT INTO user_profiles (id, user_id, bio, city, state)
        VALUES (?, ?, 'Competitive Free Fire Player', '', '')`,
@@ -115,7 +115,7 @@ router.post('/register', authLimiter, async (req, res) => {
       `INSERT INTO transactions (id, txn_id, user_id, type, amount, balance_after, status, method, description)
        VALUES (?, ?, ?, 'DEPOSIT', ?, ?, 'SUCCESS', 'SYSTEM', '🎉 SC GAMEING Welcome Bonus Credited')`,
       [
-        'txn-' + Date.now(),
+        db.generateId('txn'),
         txnId,
         userId,
         welcomeBonus,
@@ -412,14 +412,14 @@ router.post(['/reset-password', '/admin/reset-password'], authLimiter, async (re
     const newHash = bcrypt.hashSync(newPassword, salt);
 
     await db.run(
-      `UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL, updated_at = datetime('now') WHERE email = ?`,
+      `UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL, updated_at = CURRENT_TIMESTAMP WHERE email = ?`,
       [newHash, targetEmail]
     );
 
     // Invalidate existing sessions for security
     const user = await db.get('SELECT id FROM users WHERE email = ?', [targetEmail]);
     if (user) {
-      await db.run(`UPDATE sessions SET is_active = 0 WHERE user_id = ?`, [user.id]);
+      await db.run(`UPDATE sessions SET is_active = FALSE WHERE user_id = ?`, [user.id]);
     }
 
     return res.json({
@@ -440,7 +440,7 @@ router.post('/logout', authenticateToken, async (req, res) => {
     if (req.user && req.user.id) {
       // Invalidate session in DB
       await db.run(
-        `UPDATE sessions SET is_active = 0 WHERE user_id = ? AND is_active = 1`,
+        `UPDATE sessions SET is_active = FALSE WHERE user_id = ? AND is_active = TRUE`,
         [req.user.id]
       );
     }

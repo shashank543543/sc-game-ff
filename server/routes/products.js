@@ -23,7 +23,7 @@ router.get('/', optionalAuth, async (req, res) => {
       SELECT p.*, p.stock as stock_quantity, c.name as category_name 
       FROM products p 
       LEFT JOIN categories c ON p.category_id = c.id 
-      WHERE p.is_active = 1
+      WHERE p.is_active = TRUE
     `;
     const params = [];
 

@@ -77,7 +77,7 @@ router.post('/request', authenticateToken, transactionLimiter, async (req, res) 
     await db.run(
       `INSERT INTO withdrawals (id, withdrawal_id, user_id, amount, upi_id, account_holder_name, status)
        VALUES (?, ?, ?, ?, ?, ?, 'PENDING')`,
-      ['wth-' + Date.now(), withdrawalId, req.user.id, numAmount, cleanUpi, accountHolderName.trim()]
+      [db.generateId('wth'), withdrawalId, req.user.id, numAmount, cleanUpi, accountHolderName.trim()]
     );
 
     // 3. Create transaction entry
@@ -86,7 +86,7 @@ router.post('/request', authenticateToken, transactionLimiter, async (req, res) 
       `INSERT INTO transactions (id, txn_id, user_id, type, amount, balance_after, status, method, reference_id, description)
        VALUES (?, ?, ?, ?, ?, ?, 'PENDING', 'UPI', ?, ?)`,
       [
-        'txn-' + Date.now(),
+        db.generateId('txn'),
         txnId,
         req.user.id,
         'WITHDRAWAL',

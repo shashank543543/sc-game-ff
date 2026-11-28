@@ -132,7 +132,7 @@ function clearAuthCookie(res) {
 // Helper: Log active session in database
 async function recordSession(userId, token, req) {
   try {
-    const sessionId = 'sess-' + Date.now() + '-' + crypto.randomBytes(3).toString('hex');
+    const sessionId = db.generateId('sess');
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
     const userAgent = req.headers['user-agent'] || 'Unknown';
@@ -141,14 +141,14 @@ async function recordSession(userId, token, req) {
     if (db.getDbType() === 'sqlite') {
       await db.run(
         `INSERT OR REPLACE INTO sessions (id, user_id, session_token, ip_address, user_agent, expires_at, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, 1)`,
+         VALUES (?, ?, ?, ?, ?, ?, TRUE)`,
         [sessionId, userId, tokenHash, String(ip).slice(0, 50), String(userAgent).slice(0, 255), expiresAt]
       );
     } else {
       await db.run(
         `INSERT INTO sessions (id, user_id, session_token, ip_address, user_agent, expires_at, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, 1)
-         ON CONFLICT (session_token) DO UPDATE SET expires_at = EXCLUDED.expires_at, is_active = 1`,
+         VALUES (?, ?, ?, ?, ?, ?, TRUE)
+         ON CONFLICT (session_token) DO UPDATE SET expires_at = EXCLUDED.expires_at, is_active = TRUE`,
         [sessionId, userId, tokenHash, String(ip).slice(0, 50), String(userAgent).slice(0, 255), expiresAt]
       );
     }

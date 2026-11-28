@@ -21,7 +21,7 @@ router.post('/', authenticateToken, async (req, res) => {
     // Verify each product and check stock
     for (const item of items) {
       const prodId = item.productId || item.product_id;
-      const product = await db.get('SELECT * FROM products WHERE id = ? AND is_active = 1', [prodId]);
+      const product = await db.get('SELECT * FROM products WHERE id = ? AND is_active = TRUE', [prodId]);
       if (!product) {
         return res.status(400).json({ success: false, message: `Product ${prodId} is no longer available.` });
       }
@@ -67,12 +67,12 @@ router.post('/', authenticateToken, async (req, res) => {
 
     const updatedUser = await db.get('SELECT wallet_balance FROM users WHERE id = ?', [req.user.id]);
     const orderNumber = 'ORD-' + Date.now() + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
-    const orderId = 'ord-' + Date.now();
+    const orderId = db.generateId('ord');
 
     // Insert order record
     await db.run(
       `INSERT INTO orders (id, order_number, user_id, total_amount, payment_status, order_status, shipping_address, items_json)
-       VALUES (?, ?, ?, ?, 'paid', 'placed', ?, ?)`,
+       VALUES (?, ?, ?, ?, 'PAID', 'PLACED', ?, ?)`,
       [
         orderId,
         orderNumber,
@@ -98,7 +98,7 @@ router.post('/', authenticateToken, async (req, res) => {
         `INSERT INTO inventory (id, product_id, change_type, quantity, previous_stock, new_stock, notes)
          VALUES (?, ?, 'SALE', ?, ?, ?, ?)`,
         [
-          'inv-' + Date.now() + '-' + crypto.randomBytes(2).toString('hex'),
+          db.generateId('inv'),
           item.productId,
           -item.quantity,
           prevProd.stock,
@@ -114,7 +114,7 @@ router.post('/', authenticateToken, async (req, res) => {
       `INSERT INTO transactions (id, txn_id, user_id, type, amount, balance_after, status, method, reference_id, description)
        VALUES (?, ?, ?, 'PURCHASE', ?, ?, 'SUCCESS', 'WALLET', ?, ?)`,
       [
-        'txn-' + Date.now(),
+        db.generateId('txn'),
         txnId,
         req.user.id,
         totalAmount,

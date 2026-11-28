@@ -44,8 +44,16 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Apply rate limiter to all API calls
+// Apply rate limiter & ensure DB schema/seeding is ready for all API calls
 app.use('/api', apiLimiter);
+app.use('/api', async (req, res, next) => {
+  try {
+    await db.ensureReady();
+  } catch (err) {
+    console.warn('DB ensureReady warning:', err.message);
+  }
+  next();
+});
 
 // Serve static assets with high-performance caching for 50k users
 app.use(express.static(path.join(__dirname, '..', 'public'), {
@@ -89,12 +97,22 @@ app.use('/api/support', supportRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  let dbConnected = false;
+  let dbError = null;
+  try {
+    await db.get('SELECT 1 as ok');
+    dbConnected = true;
+  } catch (err) {
+    dbError = err.message;
+  }
   res.json({
     status: 'ONLINE',
     platform: 'SC GAMEING',
     timestamp: new Date().toISOString(),
-    database: db.getDbType()
+    database: db.getDbType(),
+    dbConnected,
+    ...(dbError ? { dbError } : {})
   });
 });
 

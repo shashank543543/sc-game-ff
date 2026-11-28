@@ -34,7 +34,7 @@ async function generateAndSendResetOtp(email, role = 'user') {
   // Check 60-second cooldown on existing active OTP
   const existingOtp = await db.get(
     `SELECT id, resend_after, expires_at, attempts, is_used FROM password_reset_otps 
-     WHERE email = ? AND is_used = 0
+     WHERE email = ? AND is_used = FALSE
      ORDER BY created_at DESC LIMIT 1`,
     [cleanEmail]
   );
@@ -58,20 +58,20 @@ async function generateAndSendResetOtp(email, role = 'user') {
   const salt = bcrypt.genSaltSync(10);
   const otpHash = bcrypt.hashSync(rawOtp, salt);
 
-  const id = 'otp-' + Date.now() + '-' + crypto.randomBytes(3).toString('hex');
+  const id = db.generateId('otp');
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS).toISOString();
   const resendAfter = new Date(Date.now() + RESEND_COOLDOWN_MS).toISOString();
 
   // Invalidate any previous unused OTPs for this email
   await db.run(
-    `UPDATE password_reset_otps SET is_used = 1 WHERE email = ? AND is_used = 0`,
+    `UPDATE password_reset_otps SET is_used = TRUE WHERE email = ? AND is_used = FALSE`,
     [cleanEmail]
   );
 
   // Store hashed OTP
   await db.run(
     `INSERT INTO password_reset_otps (id, email, role, otp_hash, attempts, resend_after, expires_at, is_used)
-     VALUES (?, ?, ?, ?, 0, ?, ?, 0)`,
+     VALUES (?, ?, ?, ?, 0, ?, ?, FALSE)`,
     [id, cleanEmail, role, otpHash, resendAfter, expiresAt]
   );
 
@@ -102,7 +102,7 @@ async function verifyResetOtp(email, submittedOtp) {
   // Look up latest active OTP record for this email
   const record = await db.get(
     `SELECT * FROM password_reset_otps 
-     WHERE email = ? AND is_used = 0
+     WHERE email = ? AND is_used = FALSE
      ORDER BY created_at DESC LIMIT 1`,
     [cleanEmail]
   );
@@ -114,13 +114,13 @@ async function verifyResetOtp(email, submittedOtp) {
   // Check expiration (5 minutes)
   const now = new Date();
   if (new Date(record.expires_at) < now) {
-    await db.run(`UPDATE password_reset_otps SET is_used = 1 WHERE id = ?`, [record.id]);
+    await db.run(`UPDATE password_reset_otps SET is_used = TRUE WHERE id = ?`, [record.id]);
     throw new Error('Verification code has expired. Please request a new code.');
   }
 
   // Check maximum verification attempts (5)
   if (record.attempts >= MAX_VERIFICATION_ATTEMPTS) {
-    await db.run(`UPDATE password_reset_otps SET is_used = 1 WHERE id = ?`, [record.id]);
+    await db.run(`UPDATE password_reset_otps SET is_used = TRUE WHERE id = ?`, [record.id]);
     throw new Error('Maximum verification attempts exceeded. Please request a new code.');
   }
 
@@ -132,7 +132,7 @@ async function verifyResetOtp(email, submittedOtp) {
     const remaining = MAX_VERIFICATION_ATTEMPTS - newAttempts;
 
     if (newAttempts >= MAX_VERIFICATION_ATTEMPTS) {
-      await db.run(`UPDATE password_reset_otps SET attempts = ?, is_used = 1 WHERE id = ?`, [newAttempts, record.id]);
+      await db.run(`UPDATE password_reset_otps SET attempts = ?, is_used = TRUE WHERE id = ?`, [newAttempts, record.id]);
       throw new Error('Maximum verification attempts exceeded. Please request a new code.');
     } else {
       await db.run(`UPDATE password_reset_otps SET attempts = ? WHERE id = ?`, [newAttempts, record.id]);
@@ -141,7 +141,7 @@ async function verifyResetOtp(email, submittedOtp) {
   }
 
   // Invalidate OTP immediately upon successful verification
-  await db.run(`UPDATE password_reset_otps SET is_used = 1 WHERE id = ?`, [record.id]);
+  await db.run(`UPDATE password_reset_otps SET is_used = TRUE WHERE id = ?`, [record.id]);
 
   // Issue temporary signed reset_token (valid for 10 minutes) with unique jti for single-use protection
   const tokenId = 'rst-' + crypto.randomBytes(8).toString('hex');

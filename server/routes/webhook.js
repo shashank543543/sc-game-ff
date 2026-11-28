@@ -60,7 +60,7 @@ router.post('/payment-callback', async (req, res) => {
         `INSERT INTO transactions (id, txn_id, user_id, type, amount, balance_after, status, method, reference_id, description)
          VALUES (?, ?, ?, 'DEPOSIT', ?, ?, 'SUCCESS', 'GATEWAY', ?, ?)`,
         [
-          'txn-' + Date.now(),
+          db.generateId('txn'),
           txnId,
           userId,
           amount,

@@ -110,7 +110,7 @@ async function createPaymentOrder({ userId, amount }) {
   await db.run(
     `INSERT INTO deposits (id, deposit_id, user_id, amount, upi_id, payment_method, status)
      VALUES (?, ?, ?, ?, ?, 'UPI', 'PENDING')`,
-    ['dep-' + Date.now(), orderId, userId, numAmount, qrDetails.upiId]
+    [db.generateId('dep'), orderId, userId, numAmount, qrDetails.upiId]
   );
 
   return {
@@ -290,7 +290,7 @@ async function verifyPaymentOrder({
      (id, txn_id, user_id, type, amount, balance_after, status, method, reference_id, description)
      VALUES (?, ?, ?, 'DEPOSIT', ?, ?, 'SUCCESS', 'UPI', ?, ?)`,
     [
-      'txn-' + Date.now(),
+      db.generateId('txn'),
       txnId,
       order.user_id,
       depositAmountPaise / 100.0,

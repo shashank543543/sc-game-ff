@@ -144,7 +144,7 @@ router.post(['/users/:id/wallet-adjust', '/users/:id/wallet'], async (req, res) 
       `INSERT INTO transactions (id, txn_id, user_id, type, amount, balance_after, status, method, description)
        VALUES (?, ?, ?, 'ADMIN_ADJUSTMENT', ?, ?, 'SUCCESS', 'SYSTEM', ?)`,
       [
-        'txn-' + Date.now(),
+        db.generateId('txn'),
         txnId,
         user.id,
         numAmount,
@@ -222,7 +222,7 @@ router.post('/tournaments', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Title, match type, map, and schedule time are required.' });
     }
 
-    const tournId = 'tourn-' + Date.now();
+    const tournId = db.generateId('tourn');
     await db.run(
       `INSERT INTO tournaments (
         id, title, game_mode, match_type, map, version,
@@ -473,7 +473,7 @@ router.delete('/tournaments/:id', async (req, res) => {
           `INSERT INTO transactions (id, txn_id, user_id, type, amount, balance_after, status, method, reference_id, description)
            VALUES (?, ?, ?, 'REFUND', ?, ?, 'SUCCESS', 'SYSTEM', ?, ?)`,
           [
-            'txn-' + Date.now() + Math.random(),
+            db.generateId('txn'),
             txnId,
             p.user_id,
             tournament.entry_fee,
@@ -666,7 +666,7 @@ router.post('/tournaments/:id/results', async (req, res) => {
             `INSERT INTO transactions (id, txn_id, user_id, type, amount, balance_after, status, method, reference_id, description)
              VALUES (?, ?, ?, 'PRIZE', ?, ?, 'SUCCESS', 'WALLET', ?, ?)`,
             [
-              'txn-' + Date.now() + Math.random(),
+              db.generateId('txn'),
               txnId,
               targetUserId,
               totalPrize,
@@ -974,7 +974,7 @@ router.post('/deposits/:depositId/approve', async (req, res) => {
       `INSERT INTO transactions (id, txn_id, user_id, type, amount, balance_after, status, method, reference_id, description)
        VALUES (?, ?, ?, 'DEPOSIT', ?, ?, 'SUCCESS', 'UPI', ?, ?)`,
       [
-        'txn-' + Date.now(),
+        db.generateId('txn'),
         txnId,
         deposit.user_id,
         deposit.amount,
@@ -1158,7 +1158,7 @@ router.post('/withdrawals/:id/reject', async (req, res) => {
       `INSERT INTO transactions (id, txn_id, user_id, type, amount, balance_after, status, method, reference_id, description)
        VALUES (?, ?, ?, 'REFUND', ?, ?, 'SUCCESS', 'WALLET', ?, ?)`,
       [
-        'txn-' + Date.now(),
+        db.generateId('txn'),
         txnId,
         withdrawal.user_id,
         withdrawal.amount,
@@ -1191,9 +1191,9 @@ router.post('/announcements', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Title and message are required.' });
     }
 
-    const id = 'ann-' + Date.now();
+    const id = db.generateId('ann');
     await db.run(
-      `INSERT INTO announcements (id, title, message, type, is_active) VALUES (?, ?, ?, ?, 1)`,
+      `INSERT INTO announcements (id, title, message, type, is_active) VALUES (?, ?, ?, ?, TRUE)`,
       [id, title.trim(), message.trim(), type || 'INFO']
     );
 
@@ -1234,13 +1234,13 @@ router.post('/products', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Product name and price are required.' });
     }
 
-    const productId = 'prod-' + Date.now();
+    const productId = db.generateId('prod');
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36);
     const initialStock = Number(stock !== undefined ? stock : stock_quantity) || 0;
 
     await db.run(
       `INSERT INTO products (id, category_id, name, slug, description, price, stock, sku, image_url, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
       [
         productId,
         category_id || null,
@@ -1259,7 +1259,7 @@ router.post('/products', async (req, res) => {
       await db.run(
         `INSERT INTO inventory (id, product_id, change_type, quantity, previous_stock, new_stock, notes)
          VALUES (?, ?, 'INITIAL', ?, 0, ?, 'Product creation initial stock')`,
-        ['inv-' + Date.now(), productId, initialStock, initialStock]
+        [db.generateId('inv'), productId, initialStock, initialStock]
       );
     }
 
@@ -1352,7 +1352,7 @@ router.post('/products/:id/stock', async (req, res) => {
       `INSERT INTO inventory (id, product_id, change_type, quantity, previous_stock, new_stock, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
-        'inv-' + Date.now(),
+        db.generateId('inv'),
         product.id,
         type,
         qty,
@@ -1394,7 +1394,7 @@ router.post('/categories', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Category name is required.' });
     }
 
-    const id = 'cat-' + Date.now();
+    const id = db.generateId('cat');
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     await db.run(

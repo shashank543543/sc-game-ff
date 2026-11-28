@@ -1,10 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const config = require('../config');
 const bcrypt = require('bcryptjs');
 
 let dbDriver = null;
 let dbType = 'sqlite'; // 'postgres' or 'sqlite'
+let initPromise = Promise.resolve();
 
 // Initialize Database connection
 function initDatabase() {
@@ -26,7 +28,7 @@ function initDatabase() {
         dbDriver = pool;
         dbType = 'postgres';
         console.log('✅ Connected to PostgreSQL / Supabase Database via Pool.');
-        initPostgresSchema();
+        initPromise = initPostgresSchema();
         return;
       }
     } catch (err) {
@@ -544,23 +546,27 @@ async function initPostgresSchema() {
 // Seed admin and default data if empty
 async function seedDefaultData() {
   try {
+    // For PostgreSQL, IDs must be valid UUIDs. For SQLite, TEXT is fine.
+    const isPostgres = dbType === 'postgres';
+    const makeId = (prefix) => isPostgres ? crypto.randomUUID() : (prefix + '-' + Date.now());
+
     const adminCheck = await get('SELECT id FROM users WHERE email = ?', [config.admin.email]);
     if (!adminCheck) {
       const salt = bcrypt.genSaltSync(10);
       const hash = bcrypt.hashSync(config.admin.password, salt);
-      const adminId = 'admin-' + Date.now();
+      const adminId = makeId('admin');
       await run(
         `INSERT INTO users (id, name, email, mobile, ff_ign, ff_uid, password_hash, role, wallet_balance, winning_balance, status)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [adminId, config.admin.name, config.admin.email, '6363440966', 'SC_LEADER', '1000000001', hash, 'admin', 50000.00, 50000.00, 'active']
       );
-      console.log(`👑 Admin account created: ${config.admin.email} (Password: ${config.admin.password})`);
+      console.log(`👑 Admin account created: ${config.admin.email}`);
     }
 
     // Check if tournaments exist
     const tournCount = await get('SELECT COUNT(*) as count FROM tournaments');
-    const count = tournCount?.count || tournCount?.['count'] || 0;
-    if (Number(count) === 0) {
+    const count = Number(tournCount?.count || tournCount?.['count'] || 0);
+    if (count === 0) {
       const now = Date.now();
       const in2Hours = new Date(now + 2 * 60 * 60 * 1000).toISOString();
       const in5Hours = new Date(now + 5 * 60 * 60 * 1000).toISOString();
@@ -568,95 +574,18 @@ async function seedDefaultData() {
       const liveTime = new Date(now - 15 * 60 * 1000).toISOString();
 
       const sampleTournaments = [
-        {
-          id: 'tourn-101',
-          title: '🔥 Bermuda Clash - Solo Rush #101',
-          game_mode: 'BATTLE_ROYALE',
-          match_type: 'SOLO',
-          map: 'Bermuda',
-          version: 'TPP',
-          entry_fee: 20.00,
-          total_prize_pool: 800.00,
-          prize_1st: 350.00,
-          prize_2nd: 200.00,
-          prize_3rd: 100.00,
-          per_kill_prize: 10.00,
-          max_slots: 48,
-          slots_joined: 32,
-          schedule_time: in2Hours,
-          status: 'upcoming',
-          rules: '1. No emulators or PC allowed (Mobile only).\n2. Gun attributes are OFF.\n3. Teaming up will result in immediate ban and forfeiture of funds.\n4. Room ID & Password will be revealed 15 minutes before match start.',
-          banner_url: '/assets/images/bermuda.jpg'
-        },
-        {
-          id: 'tourn-102',
-          title: '⚡ Purgatory Squad Carnage #102',
-          game_mode: 'BATTLE_ROYALE',
-          match_type: 'SQUAD',
-          map: 'Purgatory',
-          version: 'TPP',
-          entry_fee: 100.00,
-          total_prize_pool: 2000.00,
-          prize_1st: 1000.00,
-          prize_2nd: 500.00,
-          prize_3rd: 250.00,
-          per_kill_prize: 15.00,
-          max_slots: 12, // 12 squads = 48 players
-          slots_joined: 8,
-          schedule_time: in5Hours,
-          status: 'upcoming',
-          rules: '1. Squad mode. Leader pays ₹100 for the entire squad.\n2. All 4 members must enter valid Free Fire UIDs.\n3. No hacking or third-party config files.\n4. Official referee will spectate in room.',
-          banner_url: '/assets/images/purgatory.jpg'
-        },
-        {
-          id: 'tourn-103',
-          title: '💀 Kalahari Duo Showdown #103',
-          game_mode: 'BATTLE_ROYALE',
-          match_type: 'DUO',
-          map: 'Kalahari',
-          version: 'TPP',
-          entry_fee: 40.00,
-          total_prize_pool: 1200.00,
-          prize_1st: 600.00,
-          prize_2nd: 300.00,
-          prize_3rd: 150.00,
-          per_kill_prize: 10.00,
-          max_slots: 24,
-          slots_joined: 24, // Full, ready to start
-          schedule_time: liveTime,
-          status: 'room_ready',
-          room_id: '98451203',
-          room_password: 'SCG@FREEFIRE',
-          rules: '1. Duo mode.\n2. Room ID and password unlocked for registered players.\n3. Join room within 10 minutes.\n4. Take screenshot of your victory screen with kills for verification.',
-          banner_url: '/assets/images/kalahari.jpg'
-        },
-        {
-          id: 'tourn-104',
-          title: '🏆 Mega Sunday Championship #104',
-          game_mode: 'BATTLE_ROYALE',
-          match_type: 'SOLO',
-          map: 'Alpine',
-          version: 'TPP',
-          entry_fee: 50.00,
-          total_prize_pool: 3000.00,
-          prize_1st: 1500.00,
-          prize_2nd: 800.00,
-          prize_3rd: 400.00,
-          per_kill_prize: 20.00,
-          max_slots: 48,
-          slots_joined: 14,
-          schedule_time: inTomorrow,
-          status: 'upcoming',
-          rules: '1. High stakes tournament!\n2. Booyah winner gets ₹1500 cash credited directly to wallet.\n3. Per Kill bounty ₹20.\n4. Live streaming on YouTube / Discord.',
-          banner_url: '/assets/images/alpine.jpg'
-        }
+        { title: '🔥 Bermuda Clash - Solo Rush #101', game_mode: 'BATTLE_ROYALE', match_type: 'SOLO', map: 'Bermuda', version: 'TPP', entry_fee: 20.00, total_prize_pool: 800.00, prize_1st: 350.00, prize_2nd: 200.00, prize_3rd: 100.00, per_kill_prize: 10.00, max_slots: 48, slots_joined: 32, schedule_time: in2Hours, status: 'upcoming', rules: '1. No emulators or PC allowed (Mobile only).\n2. Gun attributes are OFF.\n3. Teaming up will result in immediate ban.\n4. Room ID & Password revealed 15 minutes before start.', banner_url: '/assets/images/bermuda.jpg' },
+        { title: '⚡ Purgatory Squad Carnage #102', game_mode: 'BATTLE_ROYALE', match_type: 'SQUAD', map: 'Purgatory', version: 'TPP', entry_fee: 100.00, total_prize_pool: 2000.00, prize_1st: 1000.00, prize_2nd: 500.00, prize_3rd: 250.00, per_kill_prize: 15.00, max_slots: 12, slots_joined: 8, schedule_time: in5Hours, status: 'upcoming', rules: '1. Squad mode. Leader pays for entire squad.\n2. All 4 members must enter valid Free Fire UIDs.\n3. No hacking or third-party config files.\n4. Official referee will spectate in room.', banner_url: '/assets/images/purgatory.jpg' },
+        { title: '💀 Kalahari Duo Showdown #103', game_mode: 'BATTLE_ROYALE', match_type: 'DUO', map: 'Kalahari', version: 'TPP', entry_fee: 40.00, total_prize_pool: 1200.00, prize_1st: 600.00, prize_2nd: 300.00, prize_3rd: 150.00, per_kill_prize: 10.00, max_slots: 24, slots_joined: 24, schedule_time: liveTime, status: 'room_ready', room_id: '98451203', room_password: 'SCG@FREEFIRE', rules: '1. Duo mode.\n2. Room ID and password unlocked for registered players.\n3. Join room within 10 minutes.\n4. Take screenshot of victory screen for verification.', banner_url: '/assets/images/kalahari.jpg' },
+        { title: '🏆 Mega Sunday Championship #104', game_mode: 'BATTLE_ROYALE', match_type: 'SOLO', map: 'Alpine', version: 'TPP', entry_fee: 50.00, total_prize_pool: 3000.00, prize_1st: 1500.00, prize_2nd: 800.00, prize_3rd: 400.00, per_kill_prize: 20.00, max_slots: 48, slots_joined: 14, schedule_time: inTomorrow, status: 'upcoming', rules: '1. High stakes tournament!\n2. Booyah winner gets cash credited to wallet.\n3. Per Kill bounty applicable.\n4. Live streaming on YouTube / Discord.', banner_url: '/assets/images/alpine.jpg' }
       ];
 
       for (const t of sampleTournaments) {
+        const tid = makeId('tourn');
         await run(
           `INSERT INTO tournaments (id, title, game_mode, match_type, map, version, entry_fee, total_prize_pool, prize_1st, prize_2nd, prize_3rd, per_kill_prize, max_slots, slots_joined, schedule_time, status, room_id, room_password, rules, banner_url)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [t.id, t.title, t.game_mode, t.match_type, t.map, t.version, t.entry_fee, t.total_prize_pool, t.prize_1st, t.prize_2nd, t.prize_3rd, t.per_kill_prize, t.max_slots, t.slots_joined, t.schedule_time, t.status, t.room_id || null, t.room_password || null, t.rules, t.banner_url]
+          [tid, t.title, t.game_mode, t.match_type, t.map, t.version, t.entry_fee, t.total_prize_pool, t.prize_1st, t.prize_2nd, t.prize_3rd, t.per_kill_prize, t.max_slots, t.slots_joined, t.schedule_time, t.status, t.room_id || null, t.room_password || null, t.rules, t.banner_url]
         );
       }
       console.log('🎮 Seeded sample Free Fire tournaments.');
@@ -664,12 +593,12 @@ async function seedDefaultData() {
 
     // Seed default announcement if none
     const annCount = await get('SELECT COUNT(*) as count FROM announcements');
-    const aCount = annCount?.count || annCount?.['count'] || 0;
-    if (Number(aCount) === 0) {
+    const aCount = Number(annCount?.count || annCount?.['count'] || 0);
+    if (aCount === 0) {
       await run(
         `INSERT INTO announcements (id, title, message, type, is_active)
          VALUES (?, ?, ?, ?, ?)`,
-        ['ann-1', '🎉 Welcome to SC GAMEING!', 'Daily Free Fire Cash Tournaments with automated Razorpay deposits & fast withdrawals! Join now to showcase your skills and win real cash.', 'ALERT', 1]
+        [makeId('ann'), '🎉 Welcome to SC GAMEING!', 'Daily Free Fire Cash Tournaments with automated deposits & fast withdrawals! Join now to showcase your skills and win real cash.', 'ALERT', isPostgres ? true : 1]
       );
     }
 
@@ -698,32 +627,35 @@ async function seedDefaultData() {
     if (adminUser) {
       const adminAcc = await get('SELECT id FROM admin_accounts WHERE email = ?', ['shas86728@gmail.com']);
       if (!adminAcc) {
+        const adminAccId = isPostgres ? crypto.randomUUID() : 'adm-shas86728';
         await run(
           `INSERT INTO admin_accounts (id, user_id, email, permissions, is_active)
-           VALUES (?, ?, ?, 'SUPER_ADMIN', 1)`,
-          ['adm-shas86728', adminUser.id, 'shas86728@gmail.com']
+           VALUES (?, ?, ?, 'SUPER_ADMIN', ?)`,
+          [adminAccId, adminUser.id, 'shas86728@gmail.com', isPostgres ? true : 1]
         );
       }
 
       // Ensure user profile exists
       const prof = await get('SELECT id FROM user_profiles WHERE user_id = ?', [adminUser.id]);
       if (!prof) {
+        const profId = isPostgres ? crypto.randomUUID() : ('prof-' + adminUser.id);
         await run(
           `INSERT INTO user_profiles (id, user_id, bio, city, state)
            VALUES (?, ?, 'Lead Tournament Administrator & Esports Host', 'Bangalore', 'Karnataka')`,
-          ['prof-' + adminUser.id, adminUser.id]
+          [profId, adminUser.id]
         );
       }
     }
 
     // Seed default categories if empty
     const catCheck = await get('SELECT COUNT(*) as count FROM categories');
-    const catCount = catCheck?.count || catCheck?.['count'] || 0;
-    if (Number(catCount) === 0) {
+    const catCount = Number(catCheck?.count || catCheck?.['count'] || 0);
+    if (catCount === 0) {
+      const catIds = [makeId('cat'), makeId('cat'), makeId('cat')];
       const defaultCategories = [
-        { id: 'cat-1', name: 'Esports Apparel', slug: 'esports-apparel', description: 'Official SC GAMEING jerseys, hoodies, and jackets.' },
-        { id: 'cat-2', name: 'Gaming Gear', slug: 'gaming-gear', description: 'Finger sleeves, gaming triggers, and cooling fans.' },
-        { id: 'cat-3', name: 'Digital Vouchers', slug: 'digital-vouchers', description: 'Free Fire Diamonds & membership top-up cards.' }
+        { id: catIds[0], name: 'Esports Apparel', slug: 'esports-apparel', description: 'Official SC GAMEING jerseys, hoodies, and jackets.' },
+        { id: catIds[1], name: 'Gaming Gear', slug: 'gaming-gear', description: 'Finger sleeves, gaming triggers, and cooling fans.' },
+        { id: catIds[2], name: 'Digital Vouchers', slug: 'digital-vouchers', description: 'Free Fire Diamonds & membership top-up cards.' }
       ];
       for (const c of defaultCategories) {
         await run(`INSERT INTO categories (id, name, slug, description) VALUES (?, ?, ?, ?)`, [c.id, c.name, c.slug, c.description]);
@@ -731,23 +663,25 @@ async function seedDefaultData() {
 
       // Seed sample products
       const defaultProducts = [
-        { id: 'prod-1', catId: 'cat-1', name: 'SC Elite Pro Gaming Jersey', slug: 'sc-elite-pro-jersey', desc: 'Breathable dry-fit polyester esports jersey with customized ign printing.', price: 799.00, stock: 50, sku: 'SC-JRS-001' },
-        { id: 'prod-2', catId: 'cat-2', name: 'Carbon Fiber Pro Finger Sleeves (Pack of 4)', slug: 'carbon-finger-sleeves', desc: 'Zero latency high-sensitivity breathable thumb sleeves for competitive Free Fire.', price: 249.00, stock: 200, sku: 'SC-SLV-002' },
-        { id: 'prod-3', catId: 'cat-3', name: '1080 Free Fire Diamonds Instant Voucher', slug: '1080-ff-diamonds', desc: 'Direct Garena Free Fire top-up voucher delivered to your email instantly.', price: 780.00, stock: 100, sku: 'SC-DIA-003' }
+        { catId: catIds[0], name: 'SC Elite Pro Gaming Jersey', slug: 'sc-elite-pro-jersey', desc: 'Breathable dry-fit polyester esports jersey with customized ign printing.', price: 799.00, stock: 50, sku: 'SC-JRS-001' },
+        { catId: catIds[1], name: 'Carbon Fiber Pro Finger Sleeves (Pack of 4)', slug: 'carbon-finger-sleeves', desc: 'Zero latency high-sensitivity breathable thumb sleeves for competitive Free Fire.', price: 249.00, stock: 200, sku: 'SC-SLV-002' },
+        { catId: catIds[2], name: '1080 Free Fire Diamonds Instant Voucher', slug: '1080-ff-diamonds', desc: 'Direct Garena Free Fire top-up voucher delivered to your email instantly.', price: 780.00, stock: 100, sku: 'SC-DIA-003' }
       ];
 
       for (const p of defaultProducts) {
+        const pid = makeId('prod');
+        const invId = makeId('inv');
         await run(
           `INSERT INTO products (id, category_id, name, slug, description, price, stock, sku, is_active)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-          [p.id, p.catId, p.name, p.slug, p.desc, p.price, p.stock, p.sku]
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [pid, p.catId, p.name, p.slug, p.desc, p.price, p.stock, p.sku, isPostgres ? true : 1]
         );
 
         // Record initial inventory
         await run(
           `INSERT INTO inventory (id, product_id, change_type, quantity, previous_stock, new_stock, notes)
            VALUES (?, ?, 'INITIAL', ?, 0, ?, 'Initial inventory stock load')`,
-          ['inv-' + p.id, p.id, p.stock, p.stock]
+          [invId, pid, p.stock, p.stock]
         );
       }
     }
@@ -759,10 +693,11 @@ async function seedDefaultData() {
       if (!existingAcc) {
         const balPaise = Math.round(Number(u.wallet_balance || 0) * 100);
         const winPaise = Math.round(Number(u.winning_balance || 0) * 100);
+        const waccId = isPostgres ? crypto.randomUUID() : ('wacc-' + u.id);
         await run(
           `INSERT INTO wallet_accounts (id, user_id, balance_paise, winning_balance_paise, currency, status)
            VALUES (?, ?, ?, ?, 'INR', 'ACTIVE')`,
-          ['wacc-' + u.id, u.id, balPaise, winPaise]
+          [waccId, u.id, balPaise, winPaise]
         );
       }
     }
@@ -771,13 +706,17 @@ async function seedDefaultData() {
   }
 }
 
+function toPgSql(sql) {
+  let index = 1;
+  return sql
+    .replace(/datetime\('now'\)/gi, 'NOW()')
+    .replace(/\?/g, () => `$${index++}`);
+}
+
 // Unified query methods
 async function query(sql, params = []) {
   if (dbType === 'postgres') {
-    // Convert ? to $1, $2, etc. for PostgreSQL
-    let index = 1;
-    const pgSql = sql.replace(/\?/g, () => `$${index++}`);
-    const res = await dbDriver.query(pgSql, params);
+    const res = await dbDriver.query(toPgSql(sql), params);
     return res.rows;
   } else {
     const stmt = dbDriver.prepare(sql);
@@ -787,9 +726,7 @@ async function query(sql, params = []) {
 
 async function get(sql, params = []) {
   if (dbType === 'postgres') {
-    let index = 1;
-    const pgSql = sql.replace(/\?/g, () => `$${index++}`);
-    const res = await dbDriver.query(pgSql, params);
+    const res = await dbDriver.query(toPgSql(sql), params);
     return res.rows[0] || null;
   } else {
     const stmt = dbDriver.prepare(sql);
@@ -799,9 +736,7 @@ async function get(sql, params = []) {
 
 async function run(sql, params = []) {
   if (dbType === 'postgres') {
-    let index = 1;
-    const pgSql = sql.replace(/\?/g, () => `$${index++}`);
-    const res = await dbDriver.query(pgSql, params);
+    const res = await dbDriver.query(toPgSql(sql), params);
     return { changes: res.rowCount, lastInsertRowid: res.rows[0]?.id || null };
   } else {
     const stmt = dbDriver.prepare(sql);
@@ -810,8 +745,21 @@ async function run(sql, params = []) {
   }
 }
 
+function generateId(prefix = 'id') {
+  if (dbType === 'postgres') {
+    return crypto.randomUUID();
+  }
+  return `${prefix}-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+}
+
+async function ensureReady() {
+  return initPromise;
+}
+
 module.exports = {
   initDatabase,
+  ensureReady,
+  generateId,
   query,
   get,
   run,

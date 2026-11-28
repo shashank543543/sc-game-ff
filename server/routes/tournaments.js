@@ -223,7 +223,7 @@ router.post('/:id/join', authenticateToken, async (req, res) => {
 
     // Calculate new balance & slot number
     const newBalance = currentBalance - entryFee;
-    const participantId = 'part-' + Date.now();
+    const participantId = db.generateId('part');
 
     // Check requested slot or allocate lowest available slot
     const requestedSlot = req.body.slot_number ? parseInt(req.body.slot_number, 10) : null;
@@ -288,7 +288,7 @@ router.post('/:id/join', authenticateToken, async (req, res) => {
       `INSERT INTO transactions (id, txn_id, user_id, type, amount, balance_after, status, method, reference_id, description)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        'txn-' + Date.now(),
+        db.generateId('txn'),
         txnId,
         req.user.id,
         'ENTRY_FEE',
